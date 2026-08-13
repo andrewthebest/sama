@@ -15,11 +15,16 @@ import { OUTIL_REDIGER_PARCOURS, OUTIL_REDIGER_SCENARIO } from "./anthropic-tool
  * structure attendue par `DocxAssembler` — aucun parsing de texte
  * libre, aucun risque de dérive de format.
  *
- * `thinking` est explicitement désactivé (`{type: "disabled"}`, valide
- * jusqu'à l'effort `high` inclus sur Claude Opus 5) : cette génération
- * est un remplissage de schéma en un seul appel, pas un raisonnement
- * agentique multi-étapes — le raisonnement n'apporterait rien ici et
- * ralentirait la réponse.
+ * `thinking` est explicitement désactivé (`{type: "disabled"}`) : cette
+ * génération est un remplissage de schéma en un seul appel, pas un
+ * raisonnement agentique multi-étapes — le raisonnement n'apporterait
+ * rien ici et ralentirait la réponse. Sur Claude Opus 5, `disabled`
+ * n'est valide qu'à l'effort `high` ou moins (400 au-delà) ; sur Claude
+ * Sonnet 5, `disabled` est accepté à tout niveau d'effort.
+ *
+ * `model` (`ANTHROPIC_MODEL`, défaut `claude-opus-5`) et `effort`
+ * (`ANTHROPIC_EFFORT`, défaut `high`) sont configurables par variable
+ * d'environnement.
  */
 @Injectable()
 export class AnthropicGenerationClient {
@@ -53,6 +58,7 @@ export class AnthropicGenerationClient {
     const client = this.obtenirClient();
     const outil = dto.type === DocumentType.PARCOURS ? OUTIL_REDIGER_PARCOURS : OUTIL_REDIGER_SCENARIO;
     const model = this.configService.get<string>("ANTHROPIC_MODEL", "claude-opus-5");
+    const effort = this.configService.get<"low" | "medium" | "high" | "xhigh" | "max">("ANTHROPIC_EFFORT", "high");
     const maxTokens = this.calculerMaxTokens(dto);
 
     try {
@@ -61,7 +67,7 @@ export class AnthropicGenerationClient {
         max_tokens: maxTokens,
         system: this.construireSystemPrompt(),
         thinking: { type: "disabled" },
-        output_config: { effort: "high" },
+        output_config: { effort },
         tools: [outil],
         tool_choice: { type: "tool", name: outil.name },
         messages: [{ role: "user", content: this.construireMessageUtilisateur(dto, titre) }],

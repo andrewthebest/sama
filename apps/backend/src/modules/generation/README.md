@@ -67,6 +67,12 @@ tentatives restantes sur une requête vouée au même échec.
   `AnthropicGenerationClient` échoue immédiatement et de façon non
   transitoire dès le premier job (message d'erreur explicite dans
   `GenerationJob.erreur`), sans bloquer le démarrage du serveur.
+- `ANTHROPIC_MODEL` (défaut `claude-opus-5`) et `ANTHROPIC_EFFORT`
+  (défaut `high`, valeurs valides `low`/`medium`/`high`/`xhigh`/`max`)
+  — configurables par variable d'environnement sans modifier le code.
+  Attention : `thinking: {type: "disabled"}` (voir ci-dessous) n'est
+  valide qu'à l'effort `high` ou moins sur Claude Opus 5 (400 au-delà) ;
+  Claude Sonnet 5 accepte `disabled` à tout niveau d'effort.
 
 ## Logique métier non triviale
 
@@ -88,9 +94,14 @@ B (le quota n'était alors jamais restitué).
 
 **Tool use forcé plutôt que prompt libre.** `tool_choice` force
 l'appel de l'unique outil déclaré (`rediger_scenario` ou
-`rediger_parcours`), avec `thinking: {type: "disabled"}` à l'effort
-`high` : cette génération est un remplissage de schéma en un seul
-appel, pas un raisonnement agentique multi-étapes.
+`rediger_parcours`), avec `thinking: {type: "disabled"}` : cette
+génération est un remplissage de schéma en un seul appel, pas un
+raisonnement agentique multi-étapes. Vérifié avec une clé API réelle :
+Claude Opus 5 à l'effort `high` (~4 minutes) et Claude Sonnet 5 à
+l'effort `medium` (~50 secondes) produisent tous deux un contenu
+correctement structuré ; Sonnet 5 à effort réduit est nettement plus
+rapide, au prix d'un raisonnement moins poussé sur les scénarios les
+plus complexes.
 
 ## Parcours multi-jours
 
@@ -104,8 +115,9 @@ le document assemblé contient bien un tableau d'architecture et un
 tableau de déroulé par jour (4 tableaux au total), sans troncature ni
 erreur de conversion. Ajuster
 `AnthropicGenerationClient.calculerMaxTokens` si des parcours plus
-longs que ~8 jours sont nécessaires (l'appel Anthropic réel, lui, n'a
-pas pu être testé dans cet environnement sans `ANTHROPIC_API_KEY`).
+longs que ~8 jours sont nécessaires (l'appel Anthropic réel a depuis
+été vérifié avec une clé API réelle sur des scénarios, voir ci-dessus
+— pas encore sur un parcours multi-jours complet).
 
 ## Comment l'étendre
 
