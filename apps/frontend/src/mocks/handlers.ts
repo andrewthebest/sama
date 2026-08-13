@@ -4,18 +4,22 @@ import type {
   CreateFeedbackRequestDto,
   CreateGenerationRequestDto,
   CreateGenerationResponseDto,
+  CreateResourceRequestDto,
   DocumentEntity,
   DocumentVersionEntity,
   FeedbackEntity,
   LoginRequestDto,
   RegisterRequestDto,
+  ResourceEntity,
   SubscriptionMeResponseDto,
+  VoteResourceRequestDto,
 } from "@sama-emi/contracts";
 import { DocumentType, GenerationJobStatut, ThematiqueType } from "@sama-emi/contracts";
 import utilisateurFixture from "./fixtures/user.json";
 import documentsFixtures from "./fixtures/documents.json";
 import versionsFixtures from "./fixtures/document-versions.json";
 import subscriptionFixture from "./fixtures/subscription.json";
+import resourcesFixtures from "./fixtures/resources.json";
 
 /**
  * Base de données en mémoire du mode démonstration.
@@ -31,10 +35,12 @@ const base = {
   versions: { ...versionsFixtures } as Record<string, DocumentVersionEntity>,
   abonnement: { ...subscriptionFixture } as SubscriptionMeResponseDto,
   feedbacks: {} as Record<string, FeedbackEntity[]>,
+  ressources: [...resourcesFixtures] as ResourceEntity[],
 };
 
 let compteurDocuments = base.documents.length;
 let compteurFeedbacks = 0;
+let compteurRessources = base.ressources.length;
 
 function reponseAuthFictive(): AuthResponseDto {
   return {
@@ -249,5 +255,85 @@ export const handlers = [
     const tous = Object.values(base.feedbacks).flat();
     const noteMoyenne = tous.length > 0 ? tous.reduce((somme, f) => somme + f.note, 0) / tous.length : null;
     return HttpResponse.json({ nombreFeedbacks: tous.length, noteMoyenne, feedbacks: tous });
+  }),
+
+  http.get("*/resources", ({ request }) => {
+    const url = new URL(request.url);
+    const pays = url.searchParams.get("pays");
+    const type = url.searchParams.get("type");
+    const resultat = base.ressources.filter((r) => {
+      if (r.statut !== "PUBLIEE") return false;
+      if (pays && r.pays !== pays.toUpperCase()) return false;
+      if (type && r.type !== type) return false;
+      return true;
+    });
+    return HttpResponse.json(resultat);
+  }),
+
+  http.get("*/resources/mes", () => {
+    return HttpResponse.json(base.ressources.filter((r) => r.auteurId === base.utilisateur.id));
+  }),
+
+  http.get("*/resources/moderation/file", () => {
+    return HttpResponse.json(base.ressources.filter((r) => r.statut === "EN_EXAMEN" && r.moderateursAssignes.includes(base.utilisateur.id)));
+  }),
+
+  http.post("*/resources", async ({ request }) => {
+    const dto = (await request.json()) as CreateResourceRequestDto;
+    compteurRessources += 1;
+    const maintenant = new Date().toISOString();
+    const ressource: ResourceEntity = {
+      id: `demo-resource-${compteurRessources}`,
+      titre: dto.titre,
+      description: dto.description,
+      type: dto.type,
+      format: dto.format ?? null,
+      contenu: dto.contenu ?? null,
+      configJson: dto.configJson ?? null,
+      competenceRefemi: dto.competenceRefemi ?? null,
+      thematiqueLibre: dto.thematiqueLibre ?? null,
+      pays: dto.pays.toUpperCase(),
+      auteurId: base.utilisateur.id,
+      // En mode démonstration, aucun pool de modérateurs réel n'existe :
+      // la ressource reste EN_ATTENTE, comme le ferait le backend avec
+      // moins de 3 modérateurs disponibles.
+      statut: "EN_ATTENTE",
+      moderateursAssignes: [],
+      signalements: 0,
+      dateSoumission: maintenant,
+      createdAt: maintenant,
+      updatedAt: maintenant,
+    };
+    base.ressources.unshift(ressource);
+    return HttpResponse.json(ressource, { status: 201 });
+  }),
+
+  http.post("*/resources/:id/vote", async ({ params, request }) => {
+    const id = params.id as string;
+    const dto = (await request.json()) as VoteResourceRequestDto;
+    const ressource = base.ressources.find((r) => r.id === id);
+    if (!ressource) {
+      return HttpResponse.json({ message: "Ressource introuvable." }, { status: 404 });
+    }
+    ressource.statut = dto.decision === "VALIDER" ? "PUBLIEE" : "REJETEE";
+    ressource.updatedAt = new Date().toISOString();
+    return HttpResponse.json(ressource, { status: 201 });
+  }),
+
+  http.post("*/resources/:id/signaler", ({ params }) => {
+    const id = params.id as string;
+    const ressource = base.ressources.find((r) => r.id === id);
+    if (!ressource) {
+      return HttpResponse.json({ message: "Ressource introuvable." }, { status: 404 });
+    }
+    ressource.statut = "SIGNALEE";
+    ressource.signalements += 1;
+    return HttpResponse.json(ressource, { status: 201 });
+  }),
+
+  http.patch("*/users/me/disponibilite-moderation", async ({ request }) => {
+    const dto = (await request.json()) as { disponible: boolean };
+    base.utilisateur = { ...base.utilisateur, disponiblePourModeration: dto.disponible };
+    return HttpResponse.json(base.utilisateur);
   }),
 ];

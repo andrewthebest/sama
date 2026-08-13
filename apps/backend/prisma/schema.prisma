@@ -1,11 +1,12 @@
 // ---------------------------------------------------------------------------
-// SAMA EMI — schéma Prisma (Lot 0/Session A : entités du cœur produit)
+// SAMA EMI — schéma Prisma (Lots 1-5 : cœur produit, abonnements,
+// feedback, banque de ressources communautaire)
 //
-// Ce fichier ne couvre que les entités nécessaires au cœur produit
-// (auth, users, documents, generation, feedback) plus les entités
-// d'abonnement (Plan, UserSubscription) posées sans intégration de
-// paiement, conformément au phasage validé lors du cadrage. Les entités
-// des modules suivants (Resource, ResourceReview, TrainingModule,
+// Ce fichier couvre le cœur produit (auth, users, documents, generation,
+// feedback), les entités d'abonnement (Plan, UserSubscription) posées
+// sans intégration de paiement, et la banque de ressources (Resource,
+// ResourceReview — Lot 5), conformément au phasage validé lors du
+// cadrage. Les entités des modules suivants (TrainingModule,
 // TrainingProgress, Notification) seront ajoutées à leurs sessions
 // respectives — les ajouter maintenant créerait des tables inutilisées.
 //
@@ -72,6 +73,32 @@ enum PlanPeriode {
   ANNUEL
 }
 
+/// Type extensible de ressource communautaire (cahier des charges,
+/// section 10) — de nouveaux formats pourront s'ajouter au fil des
+/// sessions sans remettre en cause le modèle `Resource`.
+enum ResourceType {
+  FICHE_PEDAGOGIQUE
+  ETUDE_DE_CAS
+  SCRIPT_VIDEO
+  LIEN_EXTERNE
+  AUTRE
+}
+
+/// Cycle de vie d'une ressource soumise — voir le diagramme d'états dans
+/// apps/backend/src/modules/resources/README.md.
+enum ResourceStatut {
+  EN_ATTENTE
+  EN_EXAMEN
+  PUBLIEE
+  REJETEE
+  SIGNALEE
+}
+
+enum ResourceDecision {
+  VALIDER
+  REJETER
+}
+
 /// Compte utilisateur — base de l'authentification.
 /// Le champ `pays` est obligatoire : il contextualise les documents
 /// générés (exemples, réalités locales, références légales) et sert de
@@ -89,12 +116,23 @@ model User {
   roleEmi        String?
   emailVerifie   Boolean  @default(false)
   refreshTokenHash String?
+  /// Un compte MODERATEUR se déclare disponible pour être désigné sur de
+  /// nouvelles ressources à modérer (cahier des charges, section 7 :
+  /// « désignation par ordre de disponibilité »). Sans effet pour les
+  /// autres rôles.
+  disponiblePourModeration     Boolean   @default(false)
+  /// Horodatage de la dernière désignation comme modérateur d'une
+  /// ressource — permet un tirage équitable en « premier disponible,
+  /// premier assigné » (tri croissant, `null` en premier).
+  derniereAssignationModeration DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   documents      Document[]
   subscriptions  UserSubscription[]
   feedbacks      Feedback[]
+  ressourcesSoumises Resource[]
+  avisRessources ResourceReview[]
 
   @@index([pays])
 }
@@ -219,4 +257,61 @@ model Feedback {
 
   @@index([documentId])
   @@index([userId])
+}
+
+/// Ressource communautaire soumise à modération (cahier des charges,
+/// section 10). Le contenu de cette session est du texte libre ou un
+/// lien selon `type` — l'éditeur multi-format riche (panneau HTML
+/// interactif, scripts vidéo structurés…) est le module
+/// `resource-builder` (Lot 6), hors périmètre ici.
+model Resource {
+  id                  String         @id @default(cuid())
+  titre               String
+  description         String
+  type                ResourceType
+  format               String?
+  /// Texte libre ou URL selon `type` — voir le commentaire du modèle.
+  contenu              String?
+  configJson           Json?
+  /// { culture, competence, niveau, thematique } si rattachée à REFEMI.
+  competenceRefemi     Json?
+  thematiqueLibre      String?
+  pays                 String
+  auteurId             String
+  auteur               User           @relation(fields: [auteurId], references: [id], onDelete: Cascade)
+  statut               ResourceStatut @default(EN_ATTENTE)
+  /// Identifiants des (jusqu'à) 3 modérateurs désignés pour cette
+  /// ressource — voir `ResourcesService.tenterAssignation`.
+  moderateursAssignes  String[]
+  /// Nombre de signalements reçus depuis la publication. La ressource
+  /// bascule en `SIGNALEE` dès le premier signalement (diagramme
+  /// d'états, README du module) ; ce compteur permet de prioriser les
+  /// cas les plus signalés lors d'une future revue.
+  signalements         Int            @default(0)
+  dateSoumission       DateTime       @default(now())
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  reviews              ResourceReview[]
+
+  @@index([statut])
+  @@index([auteurId])
+  @@index([pays])
+}
+
+/// Un vote de modération sur une ressource — une ligne par modérateur et
+/// par ressource, jamais un champ plat sur `Resource` (traçabilité
+/// complète exigée par le cahier des charges, section 7a).
+model ResourceReview {
+  id           String            @id @default(cuid())
+  resourceId   String
+  resource     Resource          @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  moderatorId  String
+  moderator    User              @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  decision     ResourceDecision
+  commentaire  String?
+  createdAt    DateTime          @default(now())
+
+  @@unique([resourceId, moderatorId])
+  @@index([resourceId])
 }

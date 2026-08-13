@@ -38,6 +38,21 @@ const router = createRouter({
       name: "abonnement",
       component: () => import("@/views/SubscriptionView.vue"),
     },
+    {
+      path: "/ressources",
+      name: "ressources",
+      component: () => import("@/views/ResourcesView.vue"),
+    },
+    {
+      path: "/ressources/nouvelle",
+      name: "ressource-nouvelle",
+      component: () => import("@/views/SubmitResourceView.vue"),
+    },
+    {
+      path: "/moderation",
+      name: "moderation",
+      component: () => import("@/views/ModerationQueueView.vue"),
+    },
   ],
 });
 

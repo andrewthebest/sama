@@ -98,3 +98,39 @@ export enum SubscriptionStatut {
   EXPIRE = "EXPIRE",
   ANNULE = "ANNULE",
 }
+
+/**
+ * Type extensible de ressource communautaire (cahier des charges,
+ * section 10). De nouveaux formats pourront s'ajouter au fil des
+ * sessions sans remettre en cause le modèle `Resource`.
+ */
+export enum ResourceType {
+  FICHE_PEDAGOGIQUE = "FICHE_PEDAGOGIQUE",
+  ETUDE_DE_CAS = "ETUDE_DE_CAS",
+  SCRIPT_VIDEO = "SCRIPT_VIDEO",
+  LIEN_EXTERNE = "LIEN_EXTERNE",
+  AUTRE = "AUTRE",
+}
+
+/**
+ * Cycle de vie d'une ressource soumise à la banque communautaire.
+ *
+ * `EN_ATTENTE` : soumise, en attente qu'au moins 3 modérateurs
+ * disponibles lui soient désignés. `EN_EXAMEN` : 3 modérateurs
+ * désignés, vote en aveugle en cours. `PUBLIEE`/`REJETEE` : quorum de
+ * 2 votes concordants atteint. `SIGNALEE` : une ressource publiée
+ * ayant reçu au moins un signalement.
+ */
+export enum ResourceStatut {
+  EN_ATTENTE = "EN_ATTENTE",
+  EN_EXAMEN = "EN_EXAMEN",
+  PUBLIEE = "PUBLIEE",
+  REJETEE = "REJETEE",
+  SIGNALEE = "SIGNALEE",
+}
+
+/** Décision d'un modérateur sur une ressource en examen. */
+export enum ResourceDecision {
+  VALIDER = "VALIDER",
+  REJETER = "REJETER",
+}

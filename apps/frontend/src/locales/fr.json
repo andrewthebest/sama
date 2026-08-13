@@ -93,5 +93,28 @@
     "envoyer": "Envoyer le retour",
     "merci": "Merci pour votre retour !",
     "nouveauRetour": "Envoyer un autre retour"
+  },
+  "resources": {
+    "lien": "Ressources",
+    "titre": "Banque de ressources",
+    "soumettre": "Soumettre une ressource",
+    "moderation": "Modération",
+    "aucune": "Aucune ressource publiée pour le moment.",
+    "signaler": "Signaler",
+    "champTitre": "Titre",
+    "champDescription": "Description",
+    "champType": "Type de ressource",
+    "champContenu": "Contenu (texte ou lien)",
+    "champThematique": "Thématique (optionnel)",
+    "envoyer": "Soumettre",
+    "voirListe": "Voir la banque de ressources",
+    "confirmationEnExamen": "Ressource soumise et en cours d'examen par 3 modérateurs.",
+    "confirmationEnAttente": "Ressource soumise, en attente de modérateurs disponibles.",
+    "fileVide": "Aucune ressource à examiner pour le moment.",
+    "commentaireVote": "Commentaire (optionnel)",
+    "valider": "Valider",
+    "rejeter": "Rejeter",
+    "disponible": "Disponible pour la modération",
+    "indisponible": "Indisponible pour la modération"
   }
 }

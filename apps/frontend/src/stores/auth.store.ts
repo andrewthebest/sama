@@ -79,5 +79,23 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem(CLE_STOCKAGE);
   }
 
-  return { accessToken, refreshToken, user, estConnecte, inscrire, connecter, rafraichirSession, deconnecter, chargerDepuisStockage };
+  /** Bascule la disponibilité du compte MODERATEUR pour être désigné sur de nouvelles ressources (module `resources`). */
+  async function definirDisponibiliteModeration(disponible: boolean): Promise<void> {
+    const { data } = await apiClient.patch<UserEntity>("/users/me/disponibilite-moderation", { disponible });
+    user.value = data;
+    persister();
+  }
+
+  return {
+    accessToken,
+    refreshToken,
+    user,
+    estConnecte,
+    inscrire,
+    connecter,
+    rafraichirSession,
+    deconnecter,
+    chargerDepuisStockage,
+    definirDisponibiliteModeration,
+  };
 });

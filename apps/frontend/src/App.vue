@@ -15,6 +15,14 @@ function seDeconnecter(): void {
   <header class="entete">
     <RouterLink to="/" class="marque">SAMA EMI</RouterLink>
     <div v-if="authStore.estConnecte" class="entete-droite">
+      <RouterLink to="/ressources" class="lien-abonnement">{{ $t("resources.lien") }}</RouterLink>
+      <RouterLink
+        v-if="authStore.user?.role === 'MODERATEUR' || authStore.user?.role === 'ADMINISTRATEUR'"
+        to="/moderation"
+        class="lien-abonnement"
+      >
+        {{ $t("resources.moderation") }}
+      </RouterLink>
       <RouterLink to="/abonnement" class="lien-abonnement">{{ $t("abonnement.lien") }}</RouterLink>
       <span class="utilisateur">{{ authStore.user?.prenom }} · {{ authStore.user?.pays }}</span>
       <button class="bouton-secondaire" @click="seDeconnecter">Déconnexion</button>

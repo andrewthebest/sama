@@ -2,21 +2,21 @@
 
 Monolithe modulaire NestJS de SAMA EMI.
 
-## Modules présents (Sessions A-D)
+## Modules présents (Sessions A-E)
 
 | Module | Rôle | README |
 |---|---|---|
 | `auth` | Inscription (pays obligatoire), connexion, JWT + refresh rotatif | [src/modules/auth](src/modules/auth/README.md) |
-| `users` | Profil utilisateur (`GET /users/me`) | [src/modules/users](src/modules/users/README.md) |
+| `users` | Profil utilisateur (`GET /users/me`), disponibilité de modération | [src/modules/users](src/modules/users/README.md) |
 | `documents` | Persistance des scénarios/parcours, historique de versions, aperçu HTML et export `.docx`/`.pdf` | [src/modules/documents](src/modules/documents/README.md) |
 | `subscriptions` | Plans, essai gratuit, décompte et remboursement de quota | [src/modules/subscriptions](src/modules/subscriptions/README.md) |
 | `generation` | Cœur du moteur — appel Anthropic (tool use), file BullMQ + Redis, scénario et parcours multi-jours | [src/modules/generation](src/modules/generation/README.md) |
 | `feedback` | Retours de session rattachés à un document généré, vue agrégée par utilisateur | [src/modules/feedback](src/modules/feedback/README.md) |
+| `resources` | Banque de ressources communautaire — soumission, quorum de modération à vote aveugle, publication, signalement | [src/modules/resources](src/modules/resources/README.md) |
 
-Cinq autres modules du cahier des charges (`resources`,
-`resource-builder`, `training`, `notifications`, `admin`) rejoindront
-`app.module.ts` à leurs sessions respectives (voir le phasage validé
-lors du cadrage).
+Quatre autres modules du cahier des charges (`resource-builder`,
+`training`, `notifications`, `admin`) rejoindront `app.module.ts` à
+leurs sessions respectives (voir le phasage validé lors du cadrage).
 
 ## Commandes
 

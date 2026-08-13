@@ -15,6 +15,9 @@ import type {
   ModeApprentissage,
   NiveauRefemi,
   Modalite,
+  ResourceDecision,
+  ResourceStatut,
+  ResourceType,
   Role,
   SubscriptionStatut,
   ThematiqueType,
@@ -32,6 +35,8 @@ export interface UserEntity {
   languePreferee: string;
   roleEmi: string | null;
   emailVerifie: boolean;
+  /** Pertinent seulement pour un compte `MODERATEUR` — voir `resources/README.md`. */
+  disponiblePourModeration: boolean;
   createdAt: string;
 }
 
@@ -132,5 +137,42 @@ export interface FeedbackEntity {
   commentaire: string | null;
   dureeReellePrevue: string | null;
   champsStructures: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+/**
+ * Ressource communautaire soumise à la banque de ressources. Le contenu
+ * de cette session (`contenu`) est du texte libre ou une URL selon
+ * `type` — l'éditeur multi-format riche est le module `resource-builder`
+ * (Lot 6).
+ */
+export interface ResourceEntity {
+  id: string;
+  titre: string;
+  description: string;
+  type: ResourceType;
+  format: string | null;
+  contenu: string | null;
+  configJson: Record<string, unknown> | null;
+  competenceRefemi: ReferentielRefemi | null;
+  thematiqueLibre: string | null;
+  pays: string;
+  auteurId: string;
+  statut: ResourceStatut;
+  /** Identifiants des (jusqu'à) 3 modérateurs désignés pour cette ressource. */
+  moderateursAssignes: string[];
+  signalements: number;
+  dateSoumission: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Un vote de modération sur une ressource — une ligne par modérateur et par ressource. */
+export interface ResourceReviewEntity {
+  id: string;
+  resourceId: string;
+  moderatorId: string;
+  decision: ResourceDecision;
+  commentaire: string | null;
   createdAt: string;
 }

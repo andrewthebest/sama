@@ -5,16 +5,17 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { DocumentsModule } from "./modules/documents/documents.module";
 import { FeedbackModule } from "./modules/feedback/feedback.module";
 import { GenerationModule } from "./modules/generation/generation.module";
+import { ResourcesModule } from "./modules/resources/resources.module";
 import { SubscriptionsModule } from "./modules/subscriptions/subscriptions.module";
 import { UsersModule } from "./modules/users/users.module";
 import { PrismaModule } from "./prisma/prisma.module";
 
 /**
  * Module racine. Assemble le cœur produit (`auth`, `users`,
- * `documents`, `generation`), `subscriptions` (Session C) et
- * `feedback` (Session D) — conformément au phasage validé en cadrage.
- * Cinq autres modules du cahier des charges (resources,
- * resource-builder, training, notifications, admin) rejoindront ce
+ * `documents`, `generation`), `subscriptions` (Session C), `feedback`
+ * (Session D) et `resources` (Session E) — conformément au phasage
+ * validé en cadrage. Quatre autres modules du cahier des charges
+ * (resource-builder, training, notifications, admin) rejoindront ce
  * fichier à leurs sessions respectives.
  */
 @Module({
@@ -36,6 +37,7 @@ import { PrismaModule } from "./prisma/prisma.module";
     SubscriptionsModule,
     GenerationModule,
     FeedbackModule,
+    ResourcesModule,
   ],
 })
 export class AppModule {}

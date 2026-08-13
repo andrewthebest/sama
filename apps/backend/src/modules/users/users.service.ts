@@ -35,6 +35,33 @@ export class UsersService {
     });
   }
 
+  /** Bascule la disponibilité d'un compte MODERATEUR pour être désigné sur de nouvelles ressources. */
+  async definirDisponibiliteModeration(userId: string, disponible: boolean): Promise<User> {
+    return this.prisma.user.update({ where: { id: userId }, data: { disponiblePourModeration: disponible } });
+  }
+
+  /**
+   * Désigne jusqu'à `nombre` modérateurs disponibles, par ordre
+   * d'ancienneté d'assignation (jamais assigné, puis assigné il y a le
+   * plus longtemps — `derniereAssignationModeration` croissant, `null`
+   * en premier) : c'est l'interprétation retenue pour « désignation par
+   * ordre de disponibilité » (cahier des charges, section 7a), qui
+   * répartit équitablement la charge de modération entre modérateurs
+   * disponibles plutôt que de toujours solliciter les mêmes.
+   */
+  async trouverModerateursDisponibles(nombre: number): Promise<User[]> {
+    return this.prisma.user.findMany({
+      where: { role: "MODERATEUR", disponiblePourModeration: true },
+      orderBy: [{ derniereAssignationModeration: { sort: "asc", nulls: "first" } }],
+      take: nombre,
+    });
+  }
+
+  /** Marque les modérateurs désignés comme venant d'être assignés — voir `trouverModerateursDisponibles`. */
+  async marquerAssignationModeration(userIds: string[]): Promise<void> {
+    await this.prisma.user.updateMany({ where: { id: { in: userIds } }, data: { derniereAssignationModeration: new Date() } });
+  }
+
   /** Convertit une entité Prisma `User` vers la forme exposée par l'API (contrat public, sans secrets). */
   toPublicEntity(user: User): UserEntity {
     return {
@@ -48,6 +75,7 @@ export class UsersService {
       languePreferee: user.languePreferee,
       roleEmi: user.roleEmi,
       emailVerifie: user.emailVerifie,
+      disponiblePourModeration: user.disponiblePourModeration,
       createdAt: user.createdAt.toISOString(),
     };
   }

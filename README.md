@@ -6,7 +6,7 @@ référentiel francophone REFEMI, des scénarios pédagogiques (une séance)
 et des parcours de formation (plusieurs jours), avec l'assistance de
 l'API Anthropic.
 
-**État du projet : Lots 1-4, Session D** — cœur produit (auth, users,
+**État du projet : Lots 1-5, Session E** — cœur produit (auth, users,
 documents, generation) avec un **moteur de génération réel** : appel à
 l'API Anthropic (tool use forcé), file BullMQ + Redis avec nouvelles
 tentatives, assemblage `.docx` (librairie `docx`), aperçu HTML
@@ -25,7 +25,12 @@ Le module **`feedback`** (Lot 4) permet de laisser un retour de
 session (note, commentaire) sur un document généré, avec une vue
 agrégée par utilisateur — voir
 [apps/backend/src/modules/feedback/README.md](apps/backend/src/modules/feedback/README.md).
-Cinq autres modules du cahier des charges suivront aux sessions
+Le module **`resources`** (Lot 5) implémente la banque de ressources
+communautaire : soumission, désignation de 3 modérateurs par
+disponibilité, **vote en aveugle à quorum 2/3**, publication,
+signalement — voir
+[apps/backend/src/modules/resources/README.md](apps/backend/src/modules/resources/README.md).
+Quatre autres modules du cahier des charges suivront aux sessions
 suivantes selon le phasage validé en cadrage.
 
 ## Stack
@@ -174,6 +179,6 @@ modulaire évolutif » validée en cadrage).
 ## Prochaines sessions
 
 Voir le phasage validé (Lot 1 → Lot 8) : la prochaine session attaquera
-la **banque de ressources communautaire** (Lot 5 — soumission, file de
-validation à quorum 2/3, publication, signalement), suivie des sessions
-`resource-builder`, `training`, `notifications`, `admin`.
+le **`resource-builder`** (Lot 6 — créateur multi-format : HTML
+interactif autonome, scripts vidéo, fiches pédagogiques, études de
+cas), suivie des sessions `training`, `notifications`, `admin`.

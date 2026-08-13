@@ -1,0 +1,40 @@
+[
+  {
+    "id": "demo-resource-1",
+    "titre": "Grille d'analyse d'une image virale",
+    "description": "Fiche pratique pour aider les apprenants à décomposer une image circulant sur les réseaux sociaux et à en vérifier l'origine.",
+    "type": "FICHE_PEDAGOGIQUE",
+    "format": "texte",
+    "contenu": "1. D'où vient l'image ? 2. Est-elle utilisée dans son contexte d'origine ? 3. Qui la partage et pourquoi ?",
+    "configJson": null,
+    "competenceRefemi": null,
+    "thematiqueLibre": "Vérification d'images",
+    "pays": "SN",
+    "auteurId": "demo-user-1",
+    "statut": "PUBLIEE",
+    "moderateursAssignes": ["demo-mod-1", "demo-mod-2", "demo-mod-3"],
+    "signalements": 0,
+    "dateSoumission": "2026-02-01T09:00:00.000Z",
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "updatedAt": "2026-02-03T10:00:00.000Z"
+  },
+  {
+    "id": "demo-resource-2",
+    "titre": "Étude de cas — rumeur sanitaire en contexte local",
+    "description": "Étude de cas construite à partir d'une rumeur ayant circulé lors d'une campagne de sensibilisation, avec grille de débriefing.",
+    "type": "ETUDE_DE_CAS",
+    "format": "texte",
+    "contenu": "Contexte, chronologie des faits, impact, questions de débriefing pour l'animateur.",
+    "configJson": null,
+    "competenceRefemi": null,
+    "thematiqueLibre": "Désinformation santé",
+    "pays": "CI",
+    "auteurId": "demo-user-1",
+    "statut": "PUBLIEE",
+    "moderateursAssignes": ["demo-mod-1", "demo-mod-2", "demo-mod-3"],
+    "signalements": 0,
+    "dateSoumission": "2026-02-05T09:00:00.000Z",
+    "createdAt": "2026-02-05T09:00:00.000Z",
+    "updatedAt": "2026-02-07T10:00:00.000Z"
+  }
+]

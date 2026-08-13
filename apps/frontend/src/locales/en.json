@@ -93,5 +93,28 @@
     "envoyer": "Send feedback",
     "merci": "Thanks for your feedback!",
     "nouveauRetour": "Send another one"
+  },
+  "resources": {
+    "lien": "Resources",
+    "titre": "Resource bank",
+    "soumettre": "Submit a resource",
+    "moderation": "Moderation",
+    "aucune": "No published resource yet.",
+    "signaler": "Report",
+    "champTitre": "Title",
+    "champDescription": "Description",
+    "champType": "Resource type",
+    "champContenu": "Content (text or link)",
+    "champThematique": "Topic (optional)",
+    "envoyer": "Submit",
+    "voirListe": "View the resource bank",
+    "confirmationEnExamen": "Resource submitted and under review by 3 moderators.",
+    "confirmationEnAttente": "Resource submitted, waiting for available moderators.",
+    "fileVide": "Nothing to review right now.",
+    "commentaireVote": "Comment (optional)",
+    "valider": "Approve",
+    "rejeter": "Reject",
+    "disponible": "Available for moderation",
+    "indisponible": "Unavailable for moderation"
   }
 }
