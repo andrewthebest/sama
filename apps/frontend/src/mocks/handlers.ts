@@ -37,6 +37,43 @@ function reponseAuthFictive(): AuthResponseDto {
   };
 }
 
+/**
+ * Construit un aperçu HTML à partir du contenu fictif d'un document,
+ * pour servir `GET /documents/:id/apercu.html` en mode démonstration.
+ * En mode connecté, ce même endpoint renvoie la conversion `mammoth`
+ * du vrai `.docx` généré — le composant d'aperçu ne fait aucune
+ * distinction entre les deux sources.
+ */
+function construireApercuHtmlDemo(contenu: Record<string, any>): string {
+  const couverture = contenu.couverture ?? {};
+  const sections = (contenu.sections ?? []) as Array<{ numero: number; titre: string; texte: string; tableauMock?: Array<Record<string, string>> }>;
+  const geste = contenu.gestesProfessionnelsFormateur;
+
+  const sectionsHtml = sections
+    .map((section) => {
+      const tableau = section.tableauMock
+        ? `<table><tbody>${section.tableauMock
+            .map((ligne) => `<tr>${Object.values(ligne).map((v) => `<td>${v}</td>`).join("")}</tr>`)
+            .join("")}</tbody></table>`
+        : "";
+      return `<h2>${section.numero}. ${section.titre}</h2><p>${section.texte}</p>${tableau}`;
+    })
+    .join("");
+
+  const gesteHtml = geste
+    ? `<h3>${geste.titre}</h3>${geste.items.map((i: { libelle: string; texte: string }) => `<p><strong>${i.libelle}</strong><br/>${i.texte}</p>`).join("")}`
+    : "";
+
+  return [
+    `<h1>${couverture.titre ?? ""}</h1>`,
+    `<p><em>${couverture.citation ?? ""}</em></p>`,
+    `<p>Pays : ${couverture.pays ?? ""} · Public : ${couverture.public ?? ""} · Durée : ${couverture.duree ?? ""} · Modalité : ${couverture.modalite ?? ""}</p>`,
+    sectionsHtml,
+    gesteHtml,
+    `<p><em>${contenu.mentionIaARelire ?? ""}</em></p>`,
+  ].join("\n");
+}
+
 export const handlers = [
   http.post("*/auth/register", async ({ request }) => {
     const dto = (await request.json()) as RegisterRequestDto;
@@ -157,5 +194,13 @@ export const handlers = [
 
     const reponse: CreateGenerationResponseDto = { jobId, documentId, statut: GenerationJobStatut.EN_FILE };
     return HttpResponse.json(reponse, { status: 201 });
+  }),
+
+  http.get("*/documents/:id/apercu.html", ({ params }) => {
+    const version = base.versions[params.id as string];
+    if (!version) {
+      return HttpResponse.json({ message: "Document introuvable." }, { status: 404 });
+    }
+    return HttpResponse.json({ html: construireApercuHtmlDemo(version.contenu as Record<string, any>) });
   }),
 ];

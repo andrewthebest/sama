@@ -4,40 +4,56 @@
 
 Cœur du moteur : reçoit une demande de génération (scénario ou parcours),
 gère le choix entre thématique REFEMI (sélecteur en cascade) et
-thématique personnalisée, orchestre la production du document, suit la
-progression via WebSocket, et persiste le résultat via `DocumentsModule`.
+thématique personnalisée, appelle l'API Anthropic pour produire le
+contenu structuré, suit la progression via WebSocket, et persiste le
+résultat via `DocumentsModule`. L'assemblage `.docx`/PDF et l'aperçu
+HTML sont hors périmètre de ce module — voir `DocumentsModule`.
 
-## État en Session A — squelette avec mock de réponse
+## Flux réel (Session B)
 
-`POST /generations` et le namespace WebSocket `/generation` sont
-pleinement fonctionnels, mais `GenerationService.demarrerSimulation`
-**ne contacte pas l'API Anthropic**. Elle simule les 4 étapes du cahier
-des charges (`CADRAGE_RECU → GENERATION_CONTENU → MISE_EN_FORME →
-FINALISATION`) avec des délais fixes (`generation.types.ts`), diffuse
-chaque changement d'étape via `GenerationGateway`, puis construit un
-contenu de document *structurellement fidèle* au gabarit réel (via
-`MockContentBuilder`, qui lit les mêmes fichiers JSON que le futur
-moteur réel) mais avec des textes d'espace réservé.
+1. `GenerationController.lancer` vérifie le quota, crée le `Document`
+   « coquille » et son `GenerationJob` (statut `EN_FILE`), puis met un
+   job en file **BullMQ** (`GenerationService.lancerGeneration`).
+2. `GenerationProcessor`, abonné à la file `generation`, dépile le job
+   et exécute le travail réel :
+   - `AnthropicGenerationClient.genererContenu` — appelle Claude avec
+     un **tool use forcé** (`tool_choice`), dont le schéma
+     (`anthropic-tool-schema.ts`) reflète exactement la structure du
+     gabarit. Claude ne rédige jamais de texte libre : il remplit ce
+     schéma, section par section, ligne de déroulé par ligne de
+     déroulé (avec `modeApprentissage` contraint à l'énumération
+     fermée). Les blocs fixes (Gestes professionnels…) ne figurent
+     **pas** dans le schéma — impossible pour l'IA de les produire ou
+     de les reformuler.
+   - `ContentComposerService.composer` fusionne cette sortie avec les
+     blocs fixes lus depuis `@sama-emi/config-gabarits` (jamais
+     générés par l'IA) pour produire le contenu final
+     (`ContenuScenario` / `ContenuParcours`, définis dans
+     `documents/composed-content.types.ts`).
+   - Ce contenu est persisté comme nouvelle `DocumentVersion` via
+     `DocumentsService.ajouterVersion`.
+3. À chaque étape (`CADRAGE_RECU → GENERATION_CONTENU → MISE_EN_FORME
+   → FINALISATION`), `GenerationGateway.emettreProgression` diffuse
+   l'avancement sur le WebSocket — le contrôleur, le DTO et la gateway
+   n'ont pas changé depuis le squelette de la Session A.
 
-Ce choix permet de valider tout le flux de bout en bout — file d'attente,
-progression temps réel, persistance, aperçu — avant d'introduire la
-dépendance réseau et le coût de l'API Anthropic.
+Le `.docx`/`.pdf` et l'aperçu HTML ne sont **pas** générés à cette
+étape : ils sont assemblés à la demande, au moment du téléchargement,
+à partir du contenu structuré déjà stocké — voir
+`DocumentsModule` (`docx-assembler.service.ts`).
 
-## Point de branchement pour la Session B
+## File d'attente et nouvelles tentatives
 
-Un seul endroit change pour passer au moteur réel :
-`GenerationService.demarrerSimulation`. Remplacer l'appel à
-`MockContentBuilder.construire` par un appel à `@anthropic-ai/sdk` avec
-*tool use* (schéma dérivé du gabarit, comme documenté dans
-`@sama-emi/config-gabarits`), tout en conservant les mêmes émissions
-`gateway.emettreProgression` aux mêmes moments. Le contrôleur, le
-DTO, la gateway et `DocumentsService` ne changent pas.
-
-À ajouter à cette occasion : file d'attente **BullMQ + Redis** (décision
-validée en cadrage) pour la limitation de débit et les nouvelles
-tentatives sur erreur transitoire de l'API Anthropic — la simulation
-actuelle utilise un simple `setTimeout` en mémoire, suffisant pour un
-squelette mais pas pour une charge de production.
+La file BullMQ `generation` (voir `generation.types.ts`,
+`OPTIONS_JOB_GENERATION`) retente automatiquement un job en échec
+**transitoire** (limite de débit, erreur 5xx, coupure réseau) avec un
+backoff exponentiel (3 tentatives : 5 s, 20 s, 80 s). C'est
+`AnthropicGenerationClient` qui classifie l'erreur
+(`AnthropicGenerationError.retryable`) : une erreur non transitoire
+(clé API absente, requête invalide, refus de sécurité) est détectée
+par `GenerationProcessor`, qui marque immédiatement le job `ECHOUE` en
+base et diffuse l'erreur sur le WebSocket, sans consommer les
+tentatives restantes sur une requête vouée au même échec.
 
 ## Dépendances
 
@@ -46,6 +62,10 @@ squelette mais pas pour une charge de production.
   vérification de quota — voir « Logique métier non triviale »
   ci-dessous. Cet accès sera retiré au profit de `SubscriptionsModule`
   dès que celui-ci existera (Lot 2).
+- `ANTHROPIC_API_KEY` (variable d'environnement) — sans elle,
+  `AnthropicGenerationClient` échoue immédiatement et de façon non
+  transitoire dès le premier job (message d'erreur explicite dans
+  `GenerationJob.erreur`), sans bloquer le démarrage du serveur.
 
 ## Logique métier non triviale
 
@@ -57,13 +77,22 @@ rejetée (`403`). C'est une version volontairement minimale de la
 politique de quota — la grille par palier, la distinction par type de
 génération et les achats à l'unité sont hors périmètre de cette
 session (voir cahier des charges, section 3.3, et le dossier
-d'architecture, section 7b).
+d'architecture, section 7b). **Limite connue** : le quota est décompté
+avant l'appel Anthropic ; un échec définitif de génération ne
+rembourse pas l'unité consommée — à traiter avec la logique complète
+du futur module `subscriptions` (Lot 2).
+
+**Tool use forcé plutôt que prompt libre.** `tool_choice` force
+l'appel de l'unique outil déclaré (`rediger_scenario` ou
+`rediger_parcours`), avec `thinking: {type: "disabled"}` à l'effort
+`high` : cette génération est un remplissage de schéma en un seul
+appel, pas un raisonnement agentique multi-étapes.
 
 ## Comment l'étendre
 
-- Retries et limitation de débit : encapsuler l'appel Anthropic dans une
-  file BullMQ (`@nestjs/bullmq`) avec une stratégie de backoff
-  exponentiel.
-- Génération de parcours multi-jours : `MockContentBuilder` lit déjà le
-  bon gabarit (`chargerGabaritParcours`) selon `dto.type` ; le vrai
-  moteur devra boucler sur `dto.nombreJours` pour le déroulé par jour.
+- Génération de parcours multi-jours : le schéma `rediger_parcours` et
+  `ContentComposerService.composerParcours` gèrent déjà
+  `derouleParJour` ; ajuster `AnthropicGenerationClient.calculerMaxTokens`
+  si des parcours plus longs que ~8 jours sont nécessaires.
+- Remboursement de quota sur échec définitif : à ajouter lors de
+  l'implémentation du module `subscriptions` (Lot 2).

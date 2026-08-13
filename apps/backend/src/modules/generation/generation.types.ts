@@ -1,14 +1,28 @@
-import { GenerationEtape } from "@sama-emi/contracts";
+import { CreateGenerationDto } from "./dto/create-generation.dto";
+
+/** Nom de la file BullMQ du moteur de génération. */
+export const FILE_GENERATION = "generation";
+
+/** Nom du job BullMQ traité par `GenerationProcessor`. */
+export const JOB_GENERER_DOCUMENT = "generer-document";
 
 /**
- * Calendrier simulé des 4 étapes de génération (cahier des charges,
- * section 3.2, étape 2). `delaiMs` est le délai *après* le passage à
- * cette étape avant de passer à la suivante — permet à l'interface de
- * montrer une progression réaliste plutôt qu'un saut instantané à 100 %.
+ * Politique de nouvelle tentative sur erreur transitoire de l'API
+ * Anthropic (rate limit, 5xx, coupure réseau) — cahier des charges,
+ * section 4.2 : « nouvelle tentative automatique en cas d'erreur
+ * transitoire ». Backoff exponentiel : 5s, 20s, 80s.
  */
-export const ETAPES_SIMULEES: Array<{ etape: GenerationEtape; progression: number; delaiMs: number }> = [
-  { etape: GenerationEtape.CADRAGE_RECU, progression: 10, delaiMs: 600 },
-  { etape: GenerationEtape.GENERATION_CONTENU, progression: 55, delaiMs: 1400 },
-  { etape: GenerationEtape.MISE_EN_FORME, progression: 85, delaiMs: 700 },
-  { etape: GenerationEtape.FINALISATION, progression: 100, delaiMs: 400 },
-];
+export const OPTIONS_JOB_GENERATION = {
+  attempts: 3,
+  backoff: { type: "exponential" as const, delay: 5000 },
+  removeOnComplete: { age: 3600 },
+  removeOnFail: { age: 86400 },
+};
+
+/** Données transportées par un job BullMQ de génération. */
+export interface DonneesJobGeneration {
+  jobId: string;
+  documentId: string;
+  titre: string;
+  dto: CreateGenerationDto;
+}

@@ -14,16 +14,19 @@ Frontend Vue 3 (Composition API) de SAMA EMI.
 | `src/data/` | `pays.ts` (liste ISO complète, via `i18n-iso-countries`), `refemi.ts` (cascade REFEMI — contenu partiellement placeholder, voir commentaire en tête de fichier) |
 | `src/locales/` | Traductions `fr` (repli) / `en` |
 
-## Écran couvert en Session A
+## Écran couvert (Session A + B)
 
 Choix scénario/parcours → formulaire de cadrage (sélecteur en cascade
 REFEMI ou thématique personnalisée, pays obligatoire) → lancement →
-barre de progression temps réel → aperçu factice du document. Voir le
-README racine pour les commandes de lancement (démo et connecté).
+barre de progression temps réel → aperçu HTML du document assemblé
+(conversion `mammoth` du vrai `.docx` en mode connecté, HTML équivalent
+généré côté mock en mode démonstration) → téléchargement `.docx`/`.pdf`
+réel (désactivé en mode démonstration, où il n'y a pas de fichier
+binaire à servir). Voir le README racine pour les commandes de
+lancement (démo et connecté).
 
-## Ce qui manque encore (hors périmètre Session A)
+## Ce qui manque encore
 
-- Téléchargement réel `.docx`/`.pdf` (le bouton est désactivé — Session B).
 - Espace personnel listant tous les documents (`GET /documents` existe
   déjà côté store et backend, mais aucun écran ne l'affiche encore).
 - Contenu REFEMI authentique dans `data/refemi.ts` (actuellement

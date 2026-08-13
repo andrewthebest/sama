@@ -6,10 +6,14 @@ référentiel francophone REFEMI, des scénarios pédagogiques (une séance)
 et des parcours de formation (plusieurs jours), avec l'assistance de
 l'API Anthropic.
 
-**État du projet : Session A du Lot 1** — cœur produit (auth, users,
-documents, generation) fonctionnel avec un moteur de génération
-*simulé* (mock de réponse, sans appel à l'API Anthropic — voir
-[apps/backend/src/modules/generation/README.md](apps/backend/src/modules/generation/README.md)).
+**État du projet : Lot 1, Session B** — cœur produit (auth, users,
+documents, generation) fonctionnel avec un **moteur de génération
+réel** : appel à l'API Anthropic (tool use forcé), file BullMQ + Redis
+avec nouvelles tentatives, assemblage `.docx` (librairie `docx`),
+aperçu HTML (`mammoth`) et export PDF (LibreOffice headless) — voir
+[apps/backend/src/modules/generation/README.md](apps/backend/src/modules/generation/README.md)
+et
+[apps/backend/src/modules/documents/README.md](apps/backend/src/modules/documents/README.md).
 Neuf autres modules du cahier des charges suivront aux sessions
 suivantes selon le phasage validé en cadrage.
 
@@ -32,7 +36,17 @@ sama-emi/
 ## Prérequis
 
 - Node.js ≥ 20, [pnpm](https://pnpm.io) (`corepack enable` ou `npm i -g pnpm`)
-- Pour le mode connecté uniquement : PostgreSQL 16 (via Docker ou installation locale)
+- Pour le mode connecté uniquement :
+  - PostgreSQL 16 (via Docker ou installation locale) et Redis (file
+    BullMQ du moteur de génération, voir `pnpm db:up`)
+  - Une clé `ANTHROPIC_API_KEY` valide pour que le moteur de génération
+    fonctionne réellement (sans elle, chaque génération échoue
+    proprement avec un message d'erreur explicite — voir
+    [apps/backend/src/modules/generation/README.md](apps/backend/src/modules/generation/README.md))
+  - Le paquet système `libreoffice-writer` pour l'export PDF (ex. sur
+    Debian/Ubuntu : `apt-get install -y libreoffice-writer` —
+    `libreoffice-core` seul ne suffit pas, voir
+    [apps/backend/src/modules/documents/README.md](apps/backend/src/modules/documents/README.md))
 
 ## Installation
 
@@ -148,8 +162,10 @@ modulaire évolutif » validée en cadrage).
 
 ## Prochaines sessions
 
-Voir le phasage validé (Lot 1 → Lot 8) : Session B branchera le
-véritable appel à l'API Anthropic dans le module `generation` (le
-point de branchement exact est documenté dans son README), suivie des
-sessions `subscriptions`, `feedback`, `resources`, `resource-builder`,
+Voir le phasage validé (Lot 1 → Lot 8) : la prochaine session
+attaquera le module `subscriptions` (grille d'abonnement par palier,
+remboursement de quota sur échec définitif de génération — limite
+connue documentée dans
+[apps/backend/src/modules/generation/README.md](apps/backend/src/modules/generation/README.md)),
+suivie des sessions `feedback`, `resources`, `resource-builder`,
 `training`, `notifications`, `admin`.
