@@ -85,5 +85,13 @@
     "quotaParcours": "Training paths",
     "quotaRessources": "Resources",
     "quotaMention": "These tier quotas are not yet enforced generation by generation — only the free trial and subscription status currently gate access."
+  },
+  "feedback": {
+    "titre": "Your feedback on this document",
+    "note": "Rating",
+    "commentaire": "Comment (optional)",
+    "envoyer": "Send feedback",
+    "merci": "Thanks for your feedback!",
+    "nouveauRetour": "Send another one"
   }
 }

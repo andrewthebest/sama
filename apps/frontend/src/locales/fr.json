@@ -85,5 +85,13 @@
     "quotaParcours": "Parcours",
     "quotaRessources": "Ressources",
     "quotaMention": "Ces quotas par palier ne sont pas encore appliqués génération par génération — seuls l'essai gratuit et le statut de l'abonnement conditionnent l'accès pour l'instant."
+  },
+  "feedback": {
+    "titre": "Votre retour sur ce document",
+    "note": "Note",
+    "commentaire": "Commentaire (optionnel)",
+    "envoyer": "Envoyer le retour",
+    "merci": "Merci pour votre retour !",
+    "nouveauRetour": "Envoyer un autre retour"
   }
 }

@@ -2,7 +2,7 @@
 
 Monolithe modulaire NestJS de SAMA EMI.
 
-## Modules présents (Sessions A-C)
+## Modules présents (Sessions A-D)
 
 | Module | Rôle | README |
 |---|---|---|
@@ -10,9 +10,10 @@ Monolithe modulaire NestJS de SAMA EMI.
 | `users` | Profil utilisateur (`GET /users/me`) | [src/modules/users](src/modules/users/README.md) |
 | `documents` | Persistance des scénarios/parcours, historique de versions, aperçu HTML et export `.docx`/`.pdf` | [src/modules/documents](src/modules/documents/README.md) |
 | `subscriptions` | Plans, essai gratuit, décompte et remboursement de quota | [src/modules/subscriptions](src/modules/subscriptions/README.md) |
-| `generation` | Cœur du moteur — appel Anthropic (tool use), file BullMQ + Redis | [src/modules/generation](src/modules/generation/README.md) |
+| `generation` | Cœur du moteur — appel Anthropic (tool use), file BullMQ + Redis, scénario et parcours multi-jours | [src/modules/generation](src/modules/generation/README.md) |
+| `feedback` | Retours de session rattachés à un document généré, vue agrégée par utilisateur | [src/modules/feedback](src/modules/feedback/README.md) |
 
-Six autres modules du cahier des charges (`feedback`, `resources`,
+Cinq autres modules du cahier des charges (`resources`,
 `resource-builder`, `training`, `notifications`, `admin`) rejoindront
 `app.module.ts` à leurs sessions respectives (voir le phasage validé
 lors du cadrage).

@@ -92,12 +92,23 @@ l'appel de l'unique outil déclaré (`rediger_scenario` ou
 `high` : cette génération est un remplissage de schéma en un seul
 appel, pas un raisonnement agentique multi-étapes.
 
+## Parcours multi-jours
+
+Le schéma `rediger_parcours` et `ContentComposerService.composerParcours`
+gèrent `architectureParcours` (vue d'ensemble par module) et
+`derouleParJour` (un tableau de déroulé par journée) depuis leur
+création en Session B. La chaîne complète (composition → assemblage
+`.docx` → aperçu `mammoth` → export PDF LibreOffice) a été vérifiée en
+Session D avec un contenu de parcours fabriqué à la main sur 3 jours :
+le document assemblé contient bien un tableau d'architecture et un
+tableau de déroulé par jour (4 tableaux au total), sans troncature ni
+erreur de conversion. Ajuster
+`AnthropicGenerationClient.calculerMaxTokens` si des parcours plus
+longs que ~8 jours sont nécessaires (l'appel Anthropic réel, lui, n'a
+pas pu être testé dans cet environnement sans `ANTHROPIC_API_KEY`).
+
 ## Comment l'étendre
 
-- Génération de parcours multi-jours : le schéma `rediger_parcours` et
-  `ContentComposerService.composerParcours` gèrent déjà
-  `derouleParJour` ; ajuster `AnthropicGenerationClient.calculerMaxTokens`
-  si des parcours plus longs que ~8 jours sont nécessaires.
 - Application réelle de la grille de quotas par palier
   (`Plan.quotaScenarios`/`quotaParcours`/`quotaRessources`) : voir la
   limite connue équivalente dans `subscriptions/README.md`.

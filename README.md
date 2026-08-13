@@ -6,20 +6,26 @@ référentiel francophone REFEMI, des scénarios pédagogiques (une séance)
 et des parcours de formation (plusieurs jours), avec l'assistance de
 l'API Anthropic.
 
-**État du projet : Lot 1-2, Session C** — cœur produit (auth, users,
+**État du projet : Lots 1-4, Session D** — cœur produit (auth, users,
 documents, generation) avec un **moteur de génération réel** : appel à
 l'API Anthropic (tool use forcé), file BullMQ + Redis avec nouvelles
 tentatives, assemblage `.docx` (librairie `docx`), aperçu HTML
-(`mammoth`) et export PDF (LibreOffice headless) — voir
+(`mammoth`) et export PDF (LibreOffice headless) — y compris pour les
+**parcours multi-jours** (architecture par module, déroulé par
+journée) — voir
 [apps/backend/src/modules/generation/README.md](apps/backend/src/modules/generation/README.md)
 et
 [apps/backend/src/modules/documents/README.md](apps/backend/src/modules/documents/README.md).
-Le module **`subscriptions`** (Lot 2) est également en place : essai
-gratuit créé automatiquement à l'inscription, décompte et
-**remboursement exact** du quota sur échec définitif de génération,
-grille de plans administrable — voir
+Le module **`subscriptions`** (Lot 2) gère l'essai gratuit créé
+automatiquement à l'inscription, le décompte et le **remboursement
+exact** du quota sur échec définitif de génération, et une grille de
+plans administrable — voir
 [apps/backend/src/modules/subscriptions/README.md](apps/backend/src/modules/subscriptions/README.md).
-Six autres modules du cahier des charges suivront aux sessions
+Le module **`feedback`** (Lot 4) permet de laisser un retour de
+session (note, commentaire) sur un document généré, avec une vue
+agrégée par utilisateur — voir
+[apps/backend/src/modules/feedback/README.md](apps/backend/src/modules/feedback/README.md).
+Cinq autres modules du cahier des charges suivront aux sessions
 suivantes selon le phasage validé en cadrage.
 
 ## Stack
@@ -168,6 +174,6 @@ modulaire évolutif » validée en cadrage).
 ## Prochaines sessions
 
 Voir le phasage validé (Lot 1 → Lot 8) : la prochaine session attaquera
-le gabarit **parcours multi-jours** et le module `feedback` (retours de
-session traçables par document — Lots 3-4), suivie des sessions
-`resources`, `resource-builder`, `training`, `notifications`, `admin`.
+la **banque de ressources communautaire** (Lot 5 — soumission, file de
+validation à quorum 2/3, publication, signalement), suivie des sessions
+`resource-builder`, `training`, `notifications`, `admin`.

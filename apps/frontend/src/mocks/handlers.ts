@@ -1,10 +1,12 @@
 import { HttpResponse, http } from "msw";
 import type {
   AuthResponseDto,
+  CreateFeedbackRequestDto,
   CreateGenerationRequestDto,
   CreateGenerationResponseDto,
   DocumentEntity,
   DocumentVersionEntity,
+  FeedbackEntity,
   LoginRequestDto,
   RegisterRequestDto,
   SubscriptionMeResponseDto,
@@ -28,9 +30,11 @@ const base = {
   documents: [...documentsFixtures] as DocumentEntity[],
   versions: { ...versionsFixtures } as Record<string, DocumentVersionEntity>,
   abonnement: { ...subscriptionFixture } as SubscriptionMeResponseDto,
+  feedbacks: {} as Record<string, FeedbackEntity[]>,
 };
 
 let compteurDocuments = base.documents.length;
+let compteurFeedbacks = 0;
 
 function reponseAuthFictive(): AuthResponseDto {
   return {
@@ -215,5 +219,35 @@ export const handlers = [
       return HttpResponse.json({ message: "Document introuvable." }, { status: 404 });
     }
     return HttpResponse.json({ html: construireApercuHtmlDemo(version.contenu as Record<string, any>) });
+  }),
+
+  http.post("*/documents/:documentId/feedback", async ({ params, request }) => {
+    const documentId = params.documentId as string;
+    const dto = (await request.json()) as CreateFeedbackRequestDto;
+    compteurFeedbacks += 1;
+
+    const feedback: FeedbackEntity = {
+      id: `demo-feedback-${compteurFeedbacks}`,
+      documentId,
+      userId: base.utilisateur.id,
+      note: dto.note,
+      commentaire: dto.commentaire ?? null,
+      dureeReellePrevue: dto.dureeReellePrevue ?? null,
+      champsStructures: dto.champsStructures ?? null,
+      createdAt: new Date().toISOString(),
+    };
+
+    base.feedbacks[documentId] = [feedback, ...(base.feedbacks[documentId] ?? [])];
+    return HttpResponse.json(feedback, { status: 201 });
+  }),
+
+  http.get("*/documents/:documentId/feedback", ({ params }) => {
+    return HttpResponse.json(base.feedbacks[params.documentId as string] ?? []);
+  }),
+
+  http.get("*/feedback/me", () => {
+    const tous = Object.values(base.feedbacks).flat();
+    const noteMoyenne = tous.length > 0 ? tous.reduce((somme, f) => somme + f.note, 0) / tous.length : null;
+    return HttpResponse.json({ nombreFeedbacks: tous.length, noteMoyenne, feedbacks: tous });
   }),
 ];
