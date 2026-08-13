@@ -1,0 +1,36 @@
+{
+  "name": "@sama-emi/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend Vue 3 de SAMA EMI — choix scénario/parcours, formulaire de cadrage, suivi de génération, aperçu de document.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:demo": "cross-env VITE_USE_MOCKS=true vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@sama-emi/contracts": "workspace:*",
+    "axios": "^1.19.0",
+    "i18n-iso-countries": "^7.14.0",
+    "pinia": "^4.0.3",
+    "socket.io-client": "^4.8.3",
+    "vue": "^3.5.41",
+    "vue-i18n": "^11.4.8",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "cross-env": "^10.1.0",
+    "msw": "^2.15.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.1",
+    "vue-tsc": "^3.3.9"
+  },
+  "msw": {
+    "workerDirectory": ["public"]
+  }
+}

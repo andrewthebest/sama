@@ -1,0 +1,317 @@
+// ---------------------------------------------------------------------------
+// SAMA EMI — schéma Prisma (Lots 1-5 : cœur produit, abonnements,
+// feedback, banque de ressources communautaire)
+//
+// Ce fichier couvre le cœur produit (auth, users, documents, generation,
+// feedback), les entités d'abonnement (Plan, UserSubscription) posées
+// sans intégration de paiement, et la banque de ressources (Resource,
+// ResourceReview — Lot 5), conformément au phasage validé lors du
+// cadrage. Les entités des modules suivants (TrainingModule,
+// TrainingProgress, Notification) seront ajoutées à leurs sessions
+// respectives — les ajouter maintenant créerait des tables inutilisées.
+//
+// Les enums ci-dessous dupliquent volontairement les valeurs de
+// `packages/contracts/src/enums.ts` : Prisma ne permet pas d'importer un
+// enum TypeScript externe dans son schéma. Toute évolution doit être
+// répercutée aux deux endroits (voir packages/contracts/README.md).
+// ---------------------------------------------------------------------------
+
+// Le générateur classique "prisma-client-js" est utilisé plutôt que le
+// nouveau générateur par défaut "prisma-client" (introduit en Prisma 7) :
+// ce dernier émet un client ESM (`import.meta.url`), incompatible avec la
+// compilation CommonJS de NestJS. "prisma-client-js" reste en CommonJS.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Depuis Prisma 7, l'URL de connexion n'est plus déclarée ici mais dans
+// `prisma.config.ts` (CLI : generate/migrate) et injectée à l'exécution
+// via un driver adapter (voir src/prisma/prisma.service.ts).
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  UTILISATEUR
+  MODERATEUR
+  ADMINISTRATEUR
+}
+
+enum DocumentType {
+  SCENARIO
+  PARCOURS
+}
+
+enum ThematiqueType {
+  REFEMI
+  PERSONNALISEE
+}
+
+enum GenerationJobStatut {
+  EN_FILE
+  EN_COURS
+  TERMINE
+  ECHOUE
+}
+
+enum GenerationEtape {
+  CADRAGE_RECU
+  GENERATION_CONTENU
+  MISE_EN_FORME
+  FINALISATION
+}
+
+enum SubscriptionStatut {
+  ESSAI
+  ACTIF
+  EXPIRE
+  ANNULE
+}
+
+enum PlanPeriode {
+  MENSUEL
+  ANNUEL
+}
+
+/// Type extensible de ressource communautaire (cahier des charges,
+/// section 10) — de nouveaux formats pourront s'ajouter au fil des
+/// sessions sans remettre en cause le modèle `Resource`.
+enum ResourceType {
+  FICHE_PEDAGOGIQUE
+  ETUDE_DE_CAS
+  SCRIPT_VIDEO
+  LIEN_EXTERNE
+  AUTRE
+}
+
+/// Cycle de vie d'une ressource soumise — voir le diagramme d'états dans
+/// apps/backend/src/modules/resources/README.md.
+enum ResourceStatut {
+  EN_ATTENTE
+  EN_EXAMEN
+  PUBLIEE
+  REJETEE
+  SIGNALEE
+}
+
+enum ResourceDecision {
+  VALIDER
+  REJETER
+}
+
+/// Compte utilisateur — base de l'authentification.
+/// Le champ `pays` est obligatoire : il contextualise les documents
+/// générés (exemples, réalités locales, références légales) et sert de
+/// filtre de pertinence pour la banque de ressources communautaire.
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  nom            String
+  prenom         String
+  role           Role     @default(UTILISATEUR)
+  organisation   String?
+  pays           String
+  languePreferee String   @default("fr")
+  roleEmi        String?
+  emailVerifie   Boolean  @default(false)
+  refreshTokenHash String?
+  /// Un compte MODERATEUR se déclare disponible pour être désigné sur de
+  /// nouvelles ressources à modérer (cahier des charges, section 7 :
+  /// « désignation par ordre de disponibilité »). Sans effet pour les
+  /// autres rôles.
+  disponiblePourModeration     Boolean   @default(false)
+  /// Horodatage de la dernière désignation comme modérateur d'une
+  /// ressource — permet un tirage équitable en « premier disponible,
+  /// premier assigné » (tri croissant, `null` en premier).
+  derniereAssignationModeration DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  documents      Document[]
+  subscriptions  UserSubscription[]
+  feedbacks      Feedback[]
+  ressourcesSoumises Resource[]
+  avisRessources ResourceReview[]
+
+  @@index([pays])
+}
+
+/// Offre d'abonnement. Les quotas sont éditables depuis l'administration
+/// (module `admin`) — jamais codés en dur dans le moteur de génération.
+model Plan {
+  id               String      @id @default(cuid())
+  nom              String
+  prixCentimes     Int
+  devise           String      @default("XOF")
+  periode          PlanPeriode @default(MENSUEL)
+  quotaScenarios   Int
+  quotaParcours    Int
+  quotaRessources  Int
+  essaiInclus      Boolean     @default(false)
+  actif            Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+
+  souscriptions    UserSubscription[]
+}
+
+/// Abonnement (ou essai gratuit) d'un utilisateur, avec suivi de
+/// consommation. Voir apps/backend/src/modules/subscriptions/README.md
+/// (Lot 2) pour la logique de décompte — les entités sont posées dès la
+/// Session A mais la logique de quota sera implémentée à ce lot.
+model UserSubscription {
+  id                    String             @id @default(cuid())
+  userId                String
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                String?
+  plan                  Plan?              @relation(fields: [planId], references: [id])
+  statut                SubscriptionStatut @default(ESSAI)
+  dateDebut             DateTime           @default(now())
+  dateFin               DateTime?
+  generationsUtilisees  Int                @default(0)
+  /// Nombre d'essais gratuits restants à l'inscription (2 par défaut,
+  /// valeur configurable — voir apps/backend/src/modules/subscriptions).
+  essaisGratuitsRestants Int               @default(2)
+  createdAt             DateTime           @default(now())
+
+  @@index([userId, statut])
+}
+
+/// Un scénario pédagogique ou un parcours de formation généré, rattaché
+/// par défaut à l'utilisateur qui l'a créé.
+model Document {
+  id                    String         @id @default(cuid())
+  type                  DocumentType
+  userId                String
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titre                 String
+  /// Pays figé au moment de la génération (indépendant d'un changement
+  /// ultérieur du pays du profil utilisateur).
+  pays                  String
+  thematiqueType        ThematiqueType
+  /// { culture, competence, niveau, thematique } si thematiqueType = REFEMI
+  referentielRefemi     Json?
+  thematiqueLibre       String?
+  objectifsLibres       String?
+  /// public, durée, modalité, profil du formateur, niveau, langue, jours…
+  parametresGeneration  Json
+  versionCourante       Int            @default(1)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  versions              DocumentVersion[]
+  generationJobs        GenerationJob[]
+  feedbacks             Feedback[]
+
+  @@index([userId])
+  @@index([pays])
+}
+
+/// Historique des versions d'un même document (régénérations/ajustements).
+model DocumentVersion {
+  id             String   @id @default(cuid())
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  numeroVersion  Int
+  /// Contenu structuré complet du document à cette version (sections,
+  /// tableaux…), au format produit par le moteur de génération.
+  contenu        Json
+  noteDeVersion  String?
+  createdAt      DateTime @default(now())
+
+  @@unique([documentId, numeroVersion])
+}
+
+/// Suivi temps réel d'une génération en cours, diffusé via le
+/// GenerationGateway (WebSocket). Voir apps/backend/src/modules/generation.
+model GenerationJob {
+  id          String              @id @default(cuid())
+  documentId  String
+  document    Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  statut      GenerationJobStatut @default(EN_FILE)
+  etape       GenerationEtape?
+  /// Pourcentage de progression indicatif (0-100), affiché côté client
+  /// pour éviter toute impression de blocage.
+  progression Int                 @default(0)
+  demarreLe   DateTime?
+  termineLe   DateTime?
+  erreur      String?
+  createdAt   DateTime            @default(now())
+
+  @@index([documentId])
+}
+
+/// Retour de session, lié à un document généré et traçable par utilisateur.
+model Feedback {
+  id                String   @id @default(cuid())
+  documentId        String
+  document          Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note              Int
+  commentaire       String?
+  dureeReellePrevue String?
+  /// Champs structurés additionnels (ce qui a bien fonctionné, ajustements…).
+  champsStructures  Json?
+  createdAt         DateTime @default(now())
+
+  @@index([documentId])
+  @@index([userId])
+}
+
+/// Ressource communautaire soumise à modération (cahier des charges,
+/// section 10). Le contenu de cette session est du texte libre ou un
+/// lien selon `type` — l'éditeur multi-format riche (panneau HTML
+/// interactif, scripts vidéo structurés…) est le module
+/// `resource-builder` (Lot 6), hors périmètre ici.
+model Resource {
+  id                  String         @id @default(cuid())
+  titre               String
+  description         String
+  type                ResourceType
+  format               String?
+  /// Texte libre ou URL selon `type` — voir le commentaire du modèle.
+  contenu              String?
+  configJson           Json?
+  /// { culture, competence, niveau, thematique } si rattachée à REFEMI.
+  competenceRefemi     Json?
+  thematiqueLibre      String?
+  pays                 String
+  auteurId             String
+  auteur               User           @relation(fields: [auteurId], references: [id], onDelete: Cascade)
+  statut               ResourceStatut @default(EN_ATTENTE)
+  /// Identifiants des (jusqu'à) 3 modérateurs désignés pour cette
+  /// ressource — voir `ResourcesService.tenterAssignation`.
+  moderateursAssignes  String[]
+  /// Nombre de signalements reçus depuis la publication. La ressource
+  /// bascule en `SIGNALEE` dès le premier signalement (diagramme
+  /// d'états, README du module) ; ce compteur permet de prioriser les
+  /// cas les plus signalés lors d'une future revue.
+  signalements         Int            @default(0)
+  dateSoumission       DateTime       @default(now())
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  reviews              ResourceReview[]
+
+  @@index([statut])
+  @@index([auteurId])
+  @@index([pays])
+}
+
+/// Un vote de modération sur une ressource — une ligne par modérateur et
+/// par ressource, jamais un champ plat sur `Resource` (traçabilité
+/// complète exigée par le cahier des charges, section 7a).
+model ResourceReview {
+  id           String            @id @default(cuid())
+  resourceId   String
+  resource     Resource          @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  moderatorId  String
+  moderator    User              @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  decision     ResourceDecision
+  commentaire  String?
+  createdAt    DateTime          @default(now())
+
+  @@unique([resourceId, moderatorId])
+  @@index([resourceId])
+}

@@ -1,0 +1,339 @@
+import { HttpResponse, http } from "msw";
+import type {
+  AuthResponseDto,
+  CreateFeedbackRequestDto,
+  CreateGenerationRequestDto,
+  CreateGenerationResponseDto,
+  CreateResourceRequestDto,
+  DocumentEntity,
+  DocumentVersionEntity,
+  FeedbackEntity,
+  LoginRequestDto,
+  RegisterRequestDto,
+  ResourceEntity,
+  SubscriptionMeResponseDto,
+  VoteResourceRequestDto,
+} from "@sama-emi/contracts";
+import { DocumentType, GenerationJobStatut, ThematiqueType } from "@sama-emi/contracts";
+import utilisateurFixture from "./fixtures/user.json";
+import documentsFixtures from "./fixtures/documents.json";
+import versionsFixtures from "./fixtures/document-versions.json";
+import subscriptionFixture from "./fixtures/subscription.json";
+import resourcesFixtures from "./fixtures/resources.json";
+
+/**
+ * Base de données en mémoire du mode démonstration.
+ *
+ * Réinitialisée à chaque rechargement de page — c'est un choix
+ * assumé : le mode démonstration sert à visualiser l'interface et à
+ * faire des démonstrations, pas à persister un état entre sessions
+ * (voir README racine, section « Mode démonstration »).
+ */
+const base = {
+  utilisateur: { ...utilisateurFixture },
+  documents: [...documentsFixtures] as DocumentEntity[],
+  versions: { ...versionsFixtures } as Record<string, DocumentVersionEntity>,
+  abonnement: { ...subscriptionFixture } as SubscriptionMeResponseDto,
+  feedbacks: {} as Record<string, FeedbackEntity[]>,
+  ressources: [...resourcesFixtures] as ResourceEntity[],
+};
+
+let compteurDocuments = base.documents.length;
+let compteurFeedbacks = 0;
+let compteurRessources = base.ressources.length;
+
+function reponseAuthFictive(): AuthResponseDto {
+  return {
+    accessToken: "mock-access-token",
+    refreshToken: "mock-refresh-token",
+    user: base.utilisateur,
+  };
+}
+
+/**
+ * Construit un aperçu HTML à partir du contenu fictif d'un document,
+ * pour servir `GET /documents/:id/apercu.html` en mode démonstration.
+ * En mode connecté, ce même endpoint renvoie la conversion `mammoth`
+ * du vrai `.docx` généré — le composant d'aperçu ne fait aucune
+ * distinction entre les deux sources.
+ */
+function construireApercuHtmlDemo(contenu: Record<string, any>): string {
+  const couverture = contenu.couverture ?? {};
+  const sections = (contenu.sections ?? []) as Array<{ numero: number; titre: string; texte: string; tableauMock?: Array<Record<string, string>> }>;
+  const geste = contenu.gestesProfessionnelsFormateur;
+
+  const sectionsHtml = sections
+    .map((section) => {
+      const tableau = section.tableauMock
+        ? `<table><tbody>${section.tableauMock
+            .map((ligne) => `<tr>${Object.values(ligne).map((v) => `<td>${v}</td>`).join("")}</tr>`)
+            .join("")}</tbody></table>`
+        : "";
+      return `<h2>${section.numero}. ${section.titre}</h2><p>${section.texte}</p>${tableau}`;
+    })
+    .join("");
+
+  const gesteHtml = geste
+    ? `<h3>${geste.titre}</h3>${geste.items.map((i: { libelle: string; texte: string }) => `<p><strong>${i.libelle}</strong><br/>${i.texte}</p>`).join("")}`
+    : "";
+
+  return [
+    `<h1>${couverture.titre ?? ""}</h1>`,
+    `<p><em>${couverture.citation ?? ""}</em></p>`,
+    `<p>Pays : ${couverture.pays ?? ""} · Public : ${couverture.public ?? ""} · Durée : ${couverture.duree ?? ""} · Modalité : ${couverture.modalite ?? ""}</p>`,
+    sectionsHtml,
+    gesteHtml,
+    `<p><em>${contenu.mentionIaARelire ?? ""}</em></p>`,
+  ].join("\n");
+}
+
+export const handlers = [
+  http.post("*/auth/register", async ({ request }) => {
+    const dto = (await request.json()) as RegisterRequestDto;
+    base.utilisateur = {
+      ...base.utilisateur,
+      email: dto.email,
+      nom: dto.nom,
+      prenom: dto.prenom,
+      pays: dto.pays.toUpperCase(),
+      organisation: dto.organisation ?? null,
+      languePreferee: dto.languePreferee ?? "fr",
+      roleEmi: dto.roleEmi ?? null,
+    };
+    return HttpResponse.json(reponseAuthFictive(), { status: 201 });
+  }),
+
+  http.post("*/auth/login", async ({ request }) => {
+    const dto = (await request.json()) as LoginRequestDto;
+    if (!dto.email || !dto.motDePasse) {
+      return HttpResponse.json({ message: "Identifiants invalides." }, { status: 401 });
+    }
+    return HttpResponse.json(reponseAuthFictive());
+  }),
+
+  http.post("*/auth/refresh", () => {
+    return HttpResponse.json({ accessToken: "mock-access-token", refreshToken: "mock-refresh-token" });
+  }),
+
+  http.post("*/auth/logout", () => new HttpResponse(null, { status: 204 })),
+
+  http.get("*/users/me", () => HttpResponse.json(base.utilisateur)),
+
+  http.get("*/documents", () => HttpResponse.json(base.documents)),
+
+  http.get("*/documents/:id", ({ params }) => {
+    const document = base.documents.find((d) => d.id === params.id);
+    if (!document) {
+      return HttpResponse.json({ message: "Document introuvable." }, { status: 404 });
+    }
+    return HttpResponse.json({ document, versionCourante: base.versions[document.id] ?? null });
+  }),
+
+  http.get("*/subscriptions/me", () => HttpResponse.json(base.abonnement)),
+
+  http.post("*/generations", async ({ request }) => {
+    const dto = (await request.json()) as CreateGenerationRequestDto;
+    compteurDocuments += 1;
+
+    // Reflète, en mode démonstration, le même décompte de quota que
+    // `SubscriptionsService.consommerQuota` côté backend réel.
+    if (base.abonnement.statut === "ACTIF") {
+      base.abonnement.generationsUtilisees += 1;
+    } else if (base.abonnement.essaisGratuitsRestants > 0) {
+      base.abonnement.essaisGratuitsRestants -= 1;
+    }
+    const documentId = `demo-doc-${compteurDocuments}`;
+    const jobId = `demo-job-${compteurDocuments}`;
+    const maintenant = new Date().toISOString();
+
+    const sujet = dto.thematiqueType === ThematiqueType.PERSONNALISEE ? dto.thematiqueLibre : dto.referentielRefemi?.thematique;
+    const titre = `${dto.type === DocumentType.PARCOURS ? "Parcours" : "Scénario"} — ${sujet ?? "Sans titre"}`;
+
+    const document: DocumentEntity = {
+      id: documentId,
+      type: dto.type,
+      userId: base.utilisateur.id,
+      titre,
+      pays: dto.pays.toUpperCase(),
+      thematiqueType: dto.thematiqueType,
+      referentielRefemi: dto.referentielRefemi ?? null,
+      thematiqueLibre: dto.thematiqueLibre ?? null,
+      objectifsLibres: dto.objectifsLibres ?? null,
+      parametresGeneration: {
+        public: dto.public,
+        duree: dto.duree,
+        modalite: dto.modalite,
+        profilFormateur: dto.profilFormateur,
+        niveau: dto.niveau ?? null,
+        langue: dto.langue,
+        nombreJours: dto.nombreJours ?? null,
+        formatGlobal: dto.formatGlobal ?? null,
+      },
+      versionCourante: 1,
+      createdAt: maintenant,
+      updatedAt: maintenant,
+    };
+
+    base.documents.unshift(document);
+    base.versions[documentId] = {
+      id: `${documentId}-v1`,
+      documentId,
+      numeroVersion: 1,
+      noteDeVersion: "Version initiale (mock démonstration)",
+      createdAt: maintenant,
+      contenu: {
+        gabaritId: dto.type === DocumentType.PARCOURS ? "parcours" : "scenario",
+        couverture: {
+          titre,
+          citation:
+            dto.thematiqueType === ThematiqueType.PERSONNALISEE
+              ? "Thématique personnalisée"
+              : `REFEMI — ${dto.referentielRefemi?.culture} · ${dto.referentielRefemi?.competence}`,
+          pays: document.pays,
+          public: dto.public,
+          duree: dto.duree,
+          modalite: dto.modalite,
+          profilFormateur: dto.profilFormateur,
+          langue: dto.langue,
+        },
+        sections: [
+          { numero: 1, id: "objectifs", titre: "Objectifs pédagogiques", texte: "[Contenu simulé — mode démonstration]" },
+          { numero: 2, id: "public-contexte", titre: "Public et contexte", texte: "[Contenu simulé — mode démonstration]" },
+          { numero: 3, id: "profil-formateur", titre: "Profil et compétences de transférabilité du formateur", texte: "[Contenu simulé — mode démonstration]" },
+        ],
+        gestesProfessionnelsFormateur: {
+          titre: "🎯 Gestes professionnels du formateur",
+          items: [
+            { cle: "configurationSalle", libelle: "Configuration de la salle", texte: "Adaptez la disposition à l'activité prévue (cercle ou U pour les échanges collectifs, îlots pour le travail en petits groupes)." },
+            { cle: "gestuelle", libelle: "Gestuelle", texte: "Déplacez-vous dans la salle plutôt que de rester statique, en particulier pendant les activités en groupe." },
+            { cle: "voix", libelle: "Voix", texte: "Variez le débit et le volume selon les temps, et marquez une pause après chaque question posée au groupe." },
+            { cle: "pedagogieDifferenciee", libelle: "Pédagogie différenciée", texte: "Combinez plusieurs canaux (oral, écrit, visuel) pour une même consigne." },
+          ],
+        },
+        mentionIaARelire:
+          "Ce document est une proposition assistée par intelligence artificielle. Il doit être relu et adapté par le formateur avant usage.",
+      },
+    };
+
+    const reponse: CreateGenerationResponseDto = { jobId, documentId, statut: GenerationJobStatut.EN_FILE };
+    return HttpResponse.json(reponse, { status: 201 });
+  }),
+
+  http.get("*/documents/:id/apercu.html", ({ params }) => {
+    const version = base.versions[params.id as string];
+    if (!version) {
+      return HttpResponse.json({ message: "Document introuvable." }, { status: 404 });
+    }
+    return HttpResponse.json({ html: construireApercuHtmlDemo(version.contenu as Record<string, any>) });
+  }),
+
+  http.post("*/documents/:documentId/feedback", async ({ params, request }) => {
+    const documentId = params.documentId as string;
+    const dto = (await request.json()) as CreateFeedbackRequestDto;
+    compteurFeedbacks += 1;
+
+    const feedback: FeedbackEntity = {
+      id: `demo-feedback-${compteurFeedbacks}`,
+      documentId,
+      userId: base.utilisateur.id,
+      note: dto.note,
+      commentaire: dto.commentaire ?? null,
+      dureeReellePrevue: dto.dureeReellePrevue ?? null,
+      champsStructures: dto.champsStructures ?? null,
+      createdAt: new Date().toISOString(),
+    };
+
+    base.feedbacks[documentId] = [feedback, ...(base.feedbacks[documentId] ?? [])];
+    return HttpResponse.json(feedback, { status: 201 });
+  }),
+
+  http.get("*/documents/:documentId/feedback", ({ params }) => {
+    return HttpResponse.json(base.feedbacks[params.documentId as string] ?? []);
+  }),
+
+  http.get("*/feedback/me", () => {
+    const tous = Object.values(base.feedbacks).flat();
+    const noteMoyenne = tous.length > 0 ? tous.reduce((somme, f) => somme + f.note, 0) / tous.length : null;
+    return HttpResponse.json({ nombreFeedbacks: tous.length, noteMoyenne, feedbacks: tous });
+  }),
+
+  http.get("*/resources", ({ request }) => {
+    const url = new URL(request.url);
+    const pays = url.searchParams.get("pays");
+    const type = url.searchParams.get("type");
+    const resultat = base.ressources.filter((r) => {
+      if (r.statut !== "PUBLIEE") return false;
+      if (pays && r.pays !== pays.toUpperCase()) return false;
+      if (type && r.type !== type) return false;
+      return true;
+    });
+    return HttpResponse.json(resultat);
+  }),
+
+  http.get("*/resources/mes", () => {
+    return HttpResponse.json(base.ressources.filter((r) => r.auteurId === base.utilisateur.id));
+  }),
+
+  http.get("*/resources/moderation/file", () => {
+    return HttpResponse.json(base.ressources.filter((r) => r.statut === "EN_EXAMEN" && r.moderateursAssignes.includes(base.utilisateur.id)));
+  }),
+
+  http.post("*/resources", async ({ request }) => {
+    const dto = (await request.json()) as CreateResourceRequestDto;
+    compteurRessources += 1;
+    const maintenant = new Date().toISOString();
+    const ressource: ResourceEntity = {
+      id: `demo-resource-${compteurRessources}`,
+      titre: dto.titre,
+      description: dto.description,
+      type: dto.type,
+      format: dto.format ?? null,
+      contenu: dto.contenu ?? null,
+      configJson: dto.configJson ?? null,
+      competenceRefemi: dto.competenceRefemi ?? null,
+      thematiqueLibre: dto.thematiqueLibre ?? null,
+      pays: dto.pays.toUpperCase(),
+      auteurId: base.utilisateur.id,
+      // En mode démonstration, aucun pool de modérateurs réel n'existe :
+      // la ressource reste EN_ATTENTE, comme le ferait le backend avec
+      // moins de 3 modérateurs disponibles.
+      statut: "EN_ATTENTE",
+      moderateursAssignes: [],
+      signalements: 0,
+      dateSoumission: maintenant,
+      createdAt: maintenant,
+      updatedAt: maintenant,
+    };
+    base.ressources.unshift(ressource);
+    return HttpResponse.json(ressource, { status: 201 });
+  }),
+
+  http.post("*/resources/:id/vote", async ({ params, request }) => {
+    const id = params.id as string;
+    const dto = (await request.json()) as VoteResourceRequestDto;
+    const ressource = base.ressources.find((r) => r.id === id);
+    if (!ressource) {
+      return HttpResponse.json({ message: "Ressource introuvable." }, { status: 404 });
+    }
+    ressource.statut = dto.decision === "VALIDER" ? "PUBLIEE" : "REJETEE";
+    ressource.updatedAt = new Date().toISOString();
+    return HttpResponse.json(ressource, { status: 201 });
+  }),
+
+  http.post("*/resources/:id/signaler", ({ params }) => {
+    const id = params.id as string;
+    const ressource = base.ressources.find((r) => r.id === id);
+    if (!ressource) {
+      return HttpResponse.json({ message: "Ressource introuvable." }, { status: 404 });
+    }
+    ressource.statut = "SIGNALEE";
+    ressource.signalements += 1;
+    return HttpResponse.json(ressource, { status: 201 });
+  }),
+
+  http.patch("*/users/me/disponibilite-moderation", async ({ request }) => {
+    const dto = (await request.json()) as { disponible: boolean };
+    base.utilisateur = { ...base.utilisateur, disponiblePourModeration: dto.disponible };
+    return HttpResponse.json(base.utilisateur);
+  }),
+];

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "Liste fermée des valeurs autorisées pour la colonne « Mode d'apprentissage » de tout tableau de déroulé. L'IA doit choisir exclusivement parmi ces valeurs (imposé via le schéma de l'outil Anthropic, cf. apps/backend/src/modules/generation).",
+  "valeurs": [
+    { "valeur": "ACQUISITION", "libelleFr": "Acquisition", "libelleEn": "Acquisition" },
+    { "valeur": "ENQUETE", "libelleFr": "Enquête", "libelleEn": "Inquiry" },
+    { "valeur": "DISCUSSION", "libelleFr": "Discussion", "libelleEn": "Discussion" },
+    { "valeur": "COLLABORATION", "libelleFr": "Collaboration", "libelleEn": "Collaboration" },
+    { "valeur": "APPLICATION", "libelleFr": "Application", "libelleEn": "Application" },
+    { "valeur": "REFLEXION_INDIVIDUELLE", "libelleFr": "Réflexion individuelle", "libelleEn": "Individual reflection" },
+    { "valeur": "CREATION", "libelleFr": "Création", "libelleEn": "Creation" }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "id": "scenario",
+  "version": 1,
+  "libelle": "Scénario pédagogique",
+  "description": "Une séance, une thématique. Structure validée avec l'utilisateur final — cahier des charges SAMA EMI, section 6.1.",
+  "couverture": {
+    "champs": [
+      "referentielRattachement",
+      "citationRefemiOuMentionPersonnalisee",
+      "public",
+      "effectif",
+      "duree",
+      "modalite",
+      "profilFormateur",
+      "langue",
+      "prerequis"
+    ],
+    "regle": "Si thematiqueType = PERSONNALISEE, afficher blocsFixes.mentionThematiquePersonnalisee à la place de la citation REFEMI (règle non négociable)."
+  },
+  "sections": [
+    {
+      "numero": 1,
+      "id": "objectifs",
+      "titre": "Objectifs pédagogiques",
+      "contenuGenereParIA": true,
+      "regle": "Objectif général + objectifs spécifiques rédigés selon la méthode SMART. Aucune étiquette de taxonomie de Bloom entre parenthèses dans le titre de section."
+    },
+    {
+      "numero": 2,
+      "id": "public-contexte",
+      "titre": "Public et contexte",
+      "contenuGenereParIA": true,
+      "regle": "Contextualisation locale à partir du pays renseigné (connectivité, réalités socioculturelles)."
+    },
+    {
+      "numero": 3,
+      "id": "profil-formateur",
+      "titre": "Profil et compétences de transférabilité du formateur",
+      "contenuGenereParIA": true,
+      "regle": "Mappé sur la Cible REFEMI (1 à 4) correspondant au profil choisi.",
+      "blocFixeApres": "gestesProfessionnelsFormateur"
+    },
+    {
+      "numero": 4,
+      "id": "deroule",
+      "titre": "Déroulé détaillé de la séance",
+      "contenuGenereParIA": true,
+      "tableau": {
+        "colonnes": ["horaire", "etape", "contenuEtObjectif", "modeApprentissage", "modalite", "materiel"],
+        "colonneModeApprentissageObligatoire": true,
+        "sourceValeursModeApprentissage": "modes-apprentissage.json"
+      }
+    },
+    {
+      "numero": 5,
+      "id": "fiches-activites",
+      "titre": "Fiches détaillées des activités",
+      "contenuGenereParIA": true,
+      "mentionFixeApres": "mentionRessourcesIndicatives"
+    },
+    {
+      "numero": 6,
+      "id": "evaluation",
+      "titre": "Évaluation",
+      "contenuGenereParIA": true,
+      "sousSections": ["diagnostique", "formative", "sommative", "aChaud"]
+    },
+    {
+      "numero": 7,
+      "id": "arbitrages",
+      "titre": "Arbitrages pédagogiques",
+      "contenuGenereParIA": true
+    },
+    {
+      "numero": 8,
+      "id": "materiel",
+      "titre": "Matériel nécessaire",
+      "contenuGenereParIA": true,
+      "mentionFixeApres": "mentionMaterielFlexible"
+    },
+    {
+      "numero": 9,
+      "id": "variantes",
+      "titre": "Variantes et adaptations",
+      "contenuGenereParIA": true,
+      "regle": "Autres durées, autres publics, autres profils de formateur."
+    }
+  ]
+}

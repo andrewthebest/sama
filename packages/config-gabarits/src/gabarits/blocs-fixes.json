@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "gestesProfessionnelsFormateur": {
+    "titre": "🎯 Gestes professionnels du formateur",
+    "regle": "Contenu IDENTIQUE quel que soit le document généré. Concaténé tel quel par le code d'assemblage à la fin de la section « Profil et compétences de transférabilité du formateur ». Ne doit jamais être soumis à l'IA ni reformulé.",
+    "items": [
+      {
+        "cle": "configurationSalle",
+        "libelle": "Configuration de la salle",
+        "texte": "Adaptez la disposition à l'activité prévue (cercle ou U pour les échanges collectifs, îlots pour le travail en petits groupes), et installez-la avant l'arrivée des participant·e·s."
+      },
+      {
+        "cle": "gestuelle",
+        "libelle": "Gestuelle",
+        "texte": "Déplacez-vous dans la salle plutôt que de rester statique, en particulier pendant les activités en groupe, pour observer discrètement et rester disponible ; gardez une posture ouverte."
+      },
+      {
+        "cle": "voix",
+        "libelle": "Voix",
+        "texte": "Variez le débit et le volume selon les temps (plus posé pour les apports, plus dynamique pour relancer l'attention), et marquez une pause après chaque question posée au groupe pour laisser le temps de réfléchir."
+      },
+      {
+        "cle": "pedagogieDifferenciee",
+        "libelle": "Pédagogie différenciée",
+        "texte": "Combinez plusieurs canaux (oral, écrit, visuel) pour une même consigne, et prévoyez des modalités de participation alternatives (écrit, geste, vote) pour les personnes moins à l'aise à l'oral."
+      }
+    ]
+  },
+  "mentionRessourcesIndicatives": "Les supports, exemples et sujets proposés ci-dessous sont indicatifs. Rien n'est figé : vous pouvez les remplacer par des ressources alternatives dès lors que l'objectif visé reste couvert. Si une ressource dont vous avez besoin n'existe pas encore, vous pouvez la créer vous-même, ou rechercher un support déjà adapté dans la banque de ressources disponible sur la plateforme.",
+  "mentionMaterielFlexible": "La liste ci-dessous correspond aux supports utilisés dans ce document. Rien n'est figé : vous pouvez la faire évoluer tant que les objectifs restent couverts. Une ressource manquante peut être créée par vos soins ou recherchée dans la banque de ressources disponible sur la plateforme.",
+  "mentionIaARelire": "Ce document est une proposition assistée par intelligence artificielle (SAMA EMI, sur la base du référentiel REFEMI). Il doit être relu et adapté par le formateur avant usage.",
+  "mentionThematiquePersonnalisee": "Thématique personnalisée"
+}

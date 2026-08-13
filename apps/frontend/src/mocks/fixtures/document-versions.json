@@ -1,0 +1,50 @@
+{
+  "demo-doc-1": {
+    "id": "demo-doc-1-v1",
+    "documentId": "demo-doc-1",
+    "numeroVersion": 1,
+    "noteDeVersion": "Version initiale (fixture démonstration)",
+    "createdAt": "2026-08-01T10:04:00.000Z",
+    "contenu": {
+      "gabaritId": "scenario",
+      "gabaritVersion": 1,
+      "couverture": {
+        "titre": "Scénario — Analyser le traitement d'une information",
+        "citation": "REFEMI — Culture informationnelle · Connaître l'information · niveau INTERMEDIAIRE",
+        "pays": "SN",
+        "public": "Jeunes / élèves (11-18 ans)",
+        "duree": "2h",
+        "modalite": "PRESENTIEL",
+        "profilFormateur": "Enseignant·e / Formateur·trice",
+        "langue": "fr"
+      },
+      "sections": [
+        { "numero": 1, "id": "objectifs", "titre": "Objectifs pédagogiques", "texte": "[Contenu simulé — mode démonstration] Cette section sera rédigée par Claude en mode connecté, en respectant strictement le gabarit « Scénario pédagogique »." },
+        { "numero": 2, "id": "public-contexte", "titre": "Public et contexte", "texte": "[Contenu simulé — mode démonstration]" },
+        { "numero": 3, "id": "profil-formateur", "titre": "Profil et compétences de transférabilité du formateur", "texte": "[Contenu simulé — mode démonstration]" },
+        {
+          "numero": 4,
+          "id": "deroule",
+          "titre": "Déroulé détaillé de la séance",
+          "texte": "[Contenu simulé — mode démonstration]",
+          "tableauMock": [{ "horaire": "—", "etape": "—", "contenuEtObjectif": "—", "modeApprentissage": "—", "modalite": "—", "materiel": "—" }]
+        },
+        { "numero": 5, "id": "fiches-activites", "titre": "Fiches détaillées des activités", "texte": "[Contenu simulé — mode démonstration]" },
+        { "numero": 6, "id": "evaluation", "titre": "Évaluation", "texte": "[Contenu simulé — mode démonstration]" },
+        { "numero": 7, "id": "arbitrages", "titre": "Arbitrages pédagogiques", "texte": "[Contenu simulé — mode démonstration]" },
+        { "numero": 8, "id": "materiel", "titre": "Matériel nécessaire", "texte": "[Contenu simulé — mode démonstration]" },
+        { "numero": 9, "id": "variantes", "titre": "Variantes et adaptations", "texte": "[Contenu simulé — mode démonstration]" }
+      ],
+      "gestesProfessionnelsFormateur": {
+        "titre": "🎯 Gestes professionnels du formateur",
+        "items": [
+          { "cle": "configurationSalle", "libelle": "Configuration de la salle", "texte": "Adaptez la disposition à l'activité prévue (cercle ou U pour les échanges collectifs, îlots pour le travail en petits groupes)." },
+          { "cle": "gestuelle", "libelle": "Gestuelle", "texte": "Déplacez-vous dans la salle plutôt que de rester statique, en particulier pendant les activités en groupe." },
+          { "cle": "voix", "libelle": "Voix", "texte": "Variez le débit et le volume selon les temps, et marquez une pause après chaque question posée au groupe." },
+          { "cle": "pedagogieDifferenciee", "libelle": "Pédagogie différenciée", "texte": "Combinez plusieurs canaux (oral, écrit, visuel) pour une même consigne." }
+        ]
+      },
+      "mentionIaARelire": "Ce document est une proposition assistée par intelligence artificielle (SAMA EMI, sur la base du référentiel REFEMI). Il doit être relu et adapté par le formateur avant usage."
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@sama-emi/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Types, DTO et enums partagés entre le backend NestJS, le frontend Vue et les mocks MSW. Source unique du contrat d'API.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

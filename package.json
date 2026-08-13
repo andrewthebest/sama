@@ -1,0 +1,24 @@
+{
+  "name": "sama-emi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SAMA EMI — plateforme de génération de scénarios pédagogiques et parcours de formation en Éducation aux Médias et à l'Information (EMI), fondée sur le référentiel REFEMI.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "postinstall": "pnpm build:packages",
+    "build:packages": "pnpm --filter @sama-emi/contracts build && pnpm --filter @sama-emi/config-gabarits build",
+    "dev:backend": "pnpm --filter @sama-emi/backend start:dev",
+    "dev:frontend": "pnpm --filter @sama-emi/frontend dev",
+    "dev:frontend:demo": "pnpm --filter @sama-emi/frontend dev:demo",
+    "build": "pnpm build:packages && pnpm -r --filter=./apps/* build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm --filter @sama-emi/backend test",
+    "prisma:generate": "pnpm --filter @sama-emi/backend prisma:generate",
+    "prisma:migrate": "pnpm --filter @sama-emi/backend prisma:migrate",
+    "db:up": "docker compose up -d postgres redis"
+  }
+}
