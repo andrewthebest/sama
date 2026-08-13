@@ -154,6 +154,19 @@ curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/j
 
 Doit renvoyer un `accessToken`, un `refreshToken` et le profil créé.
 
+## Tests
+
+```bash
+pnpm test
+```
+
+Suite de tests unitaires **Jest** du backend (services avec
+dépendances mockées — aucune base de données ni Redis requis pour les
+lancer). Voir
+[apps/backend/README.md](apps/backend/README.md#tests) pour le détail
+de ce qui est couvert et ce qui ne l'est pas encore (pas de suite
+e2e à ce stade).
+
 ## Documentation
 
 - Documentation API REST auto-générée (Swagger) : `/api/docs` une fois

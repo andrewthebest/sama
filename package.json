@@ -16,6 +16,7 @@
     "dev:frontend:demo": "pnpm --filter @sama-emi/frontend dev:demo",
     "build": "pnpm build:packages && pnpm -r --filter=./apps/* build",
     "lint": "pnpm -r lint",
+    "test": "pnpm --filter @sama-emi/backend test",
     "prisma:generate": "pnpm --filter @sama-emi/backend prisma:generate",
     "prisma:migrate": "pnpm --filter @sama-emi/backend prisma:migrate",
     "db:up": "docker compose up -d postgres redis"
