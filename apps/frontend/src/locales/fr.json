@@ -68,5 +68,22 @@
     "mentionMock": "Contenu simulé (Session A) — sera remplacé par la génération réelle en Session B.",
     "telecharger": "Télécharger (.docx)",
     "nouvelleGeneration": "Lancer une nouvelle génération"
+  },
+  "abonnement": {
+    "lien": "Mon abonnement",
+    "titre": "Mon abonnement",
+    "statutEssai": "Essai gratuit",
+    "statutActif": "Abonnement actif",
+    "statutExpire": "Abonnement expiré",
+    "statutAnnule": "Abonnement annulé",
+    "essaisRestants": "{n} génération(s) d'essai restante(s) sur 2",
+    "essaisEpuises": "Essai gratuit épuisé — un abonnement actif est requis pour générer un nouveau document.",
+    "generationsUtilisees": "{n} génération(s) utilisée(s) depuis le début de la période",
+    "planTitre": "Plan",
+    "planAucun": "Aucun plan associé — vous utilisez votre essai gratuit.",
+    "quotaScenarios": "Scénarios",
+    "quotaParcours": "Parcours",
+    "quotaRessources": "Ressources",
+    "quotaMention": "Ces quotas par palier ne sont pas encore appliqués génération par génération — seuls l'essai gratuit et le statut de l'abonnement conditionnent l'accès pour l'instant."
   }
 }

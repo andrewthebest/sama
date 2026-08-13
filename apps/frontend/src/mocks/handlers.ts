@@ -7,11 +7,13 @@ import type {
   DocumentVersionEntity,
   LoginRequestDto,
   RegisterRequestDto,
+  SubscriptionMeResponseDto,
 } from "@sama-emi/contracts";
 import { DocumentType, GenerationJobStatut, ThematiqueType } from "@sama-emi/contracts";
 import utilisateurFixture from "./fixtures/user.json";
 import documentsFixtures from "./fixtures/documents.json";
 import versionsFixtures from "./fixtures/document-versions.json";
+import subscriptionFixture from "./fixtures/subscription.json";
 
 /**
  * Base de données en mémoire du mode démonstration.
@@ -25,6 +27,7 @@ const base = {
   utilisateur: { ...utilisateurFixture },
   documents: [...documentsFixtures] as DocumentEntity[],
   versions: { ...versionsFixtures } as Record<string, DocumentVersionEntity>,
+  abonnement: { ...subscriptionFixture } as SubscriptionMeResponseDto,
 };
 
 let compteurDocuments = base.documents.length;
@@ -116,9 +119,19 @@ export const handlers = [
     return HttpResponse.json({ document, versionCourante: base.versions[document.id] ?? null });
   }),
 
+  http.get("*/subscriptions/me", () => HttpResponse.json(base.abonnement)),
+
   http.post("*/generations", async ({ request }) => {
     const dto = (await request.json()) as CreateGenerationRequestDto;
     compteurDocuments += 1;
+
+    // Reflète, en mode démonstration, le même décompte de quota que
+    // `SubscriptionsService.consommerQuota` côté backend réel.
+    if (base.abonnement.statut === "ACTIF") {
+      base.abonnement.generationsUtilisees += 1;
+    } else if (base.abonnement.essaisGratuitsRestants > 0) {
+      base.abonnement.essaisGratuitsRestants -= 1;
+    }
     const documentId = `demo-doc-${compteurDocuments}`;
     const jobId = `demo-job-${compteurDocuments}`;
     const maintenant = new Date().toISOString();

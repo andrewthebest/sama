@@ -1,31 +1,34 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { CreateGenerationResponseDto, DocumentType, GenerationJobStatut, ThematiqueType } from "@sama-emi/contracts";
 import { PrismaService } from "../../prisma/prisma.service";
 import { DocumentsService } from "../documents/documents.service";
+import { SubscriptionsService } from "../subscriptions/subscriptions.service";
 import { CreateGenerationDto } from "./dto/create-generation.dto";
 import { DonneesJobGeneration, FILE_GENERATION, JOB_GENERER_DOCUMENT, OPTIONS_JOB_GENERATION } from "./generation.types";
 
 /**
  * Service central du module `generation`.
  *
- * `lancerGeneration` crée le document et son job, puis délègue le
- * travail réel (appel Anthropic, assemblage, persistance) à
- * `GenerationProcessor` via la file BullMQ `generation` — voir ce
- * processor pour l'appel au moteur réel et sa politique de nouvelle
- * tentative sur erreur transitoire.
+ * `lancerGeneration` réserve le quota (`SubscriptionsService`), crée le
+ * document et son job, puis délègue le travail réel (appel Anthropic,
+ * assemblage, persistance) à `GenerationProcessor` via la file BullMQ
+ * `generation` — voir ce processor pour l'appel au moteur réel, sa
+ * politique de nouvelle tentative sur erreur transitoire, et le
+ * remboursement de quota sur échec définitif.
  */
 @Injectable()
 export class GenerationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly documentsService: DocumentsService,
+    private readonly subscriptionsService: SubscriptionsService,
     @InjectQueue(FILE_GENERATION) private readonly file: Queue<DonneesJobGeneration>,
   ) {}
 
   async lancerGeneration(dto: CreateGenerationDto, userId: string): Promise<CreateGenerationResponseDto> {
-    await this.verifierEtReserverQuota(userId);
+    const { subscriptionId, type: typeConsommationQuota } = await this.subscriptionsService.consommerQuota(userId);
 
     const titre = this.deriverTitre(dto);
 
@@ -59,7 +62,7 @@ export class GenerationService {
     // sans indirection supplémentaire.
     await this.file.add(
       JOB_GENERER_DOCUMENT,
-      { jobId: job.id, documentId: document.id, titre, dto },
+      { jobId: job.id, documentId: document.id, titre, dto, userId, subscriptionId, typeConsommationQuota },
       { ...OPTIONS_JOB_GENERATION, jobId: job.id },
     );
 
@@ -72,47 +75,6 @@ export class GenerationService {
       throw new NotFoundException("Génération introuvable.");
     }
     return job;
-  }
-
-  /**
-   * Vérifie le quota disponible avant de lancer une génération, comme
-   * l'exige le flux utilisateur (cahier des charges, section 3.2,
-   * étape 3). Implémentation minimale : seul l'essai gratuit est
-   * vérifié et décompté. La grille de quotas par palier d'abonnement,
-   * la distinction par type de génération (scénario/parcours/ressource)
-   * et la politique de blocage complète appartiennent au futur module
-   * `subscriptions` (Lot 2) — cette méthode sera alors déplacée vers
-   * `SubscriptionsService.consumeQuota()` sans changer l'appelant.
-   */
-  private async verifierEtReserverQuota(userId: string): Promise<void> {
-    const abonnement = await this.prisma.userSubscription.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (!abonnement) {
-      throw new ForbiddenException("Aucun abonnement ou essai associé à ce compte.");
-    }
-
-    if (abonnement.statut === "ACTIF") {
-      await this.prisma.userSubscription.update({
-        where: { id: abonnement.id },
-        data: { generationsUtilisees: { increment: 1 } },
-      });
-      return;
-    }
-
-    if (abonnement.essaisGratuitsRestants > 0) {
-      await this.prisma.userSubscription.update({
-        where: { id: abonnement.id },
-        data: { essaisGratuitsRestants: { decrement: 1 } },
-      });
-      return;
-    }
-
-    // Politique de dépassement de quota validée en cadrage : blocage
-    // (pas de report au mois suivant, pas d'achat à l'unité).
-    throw new ForbiddenException("Quota de générations épuisé. Un abonnement actif est requis pour continuer.");
   }
 
   private deriverTitre(dto: CreateGenerationDto): string {

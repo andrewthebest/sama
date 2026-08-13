@@ -1,0 +1,11 @@
+{
+  "id": "demo-sub-1",
+  "userId": "demo-user-1",
+  "planId": null,
+  "statut": "ESSAI",
+  "dateDebut": "2026-01-15T09:00:00.000Z",
+  "dateFin": null,
+  "generationsUtilisees": 0,
+  "essaisGratuitsRestants": 1,
+  "plan": null
+}

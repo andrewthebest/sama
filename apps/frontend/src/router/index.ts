@@ -33,6 +33,11 @@ const router = createRouter({
       component: () => import("@/views/DocumentPreviewView.vue"),
       props: true,
     },
+    {
+      path: "/abonnement",
+      name: "abonnement",
+      component: () => import("@/views/SubscriptionView.vue"),
+    },
   ],
 });
 

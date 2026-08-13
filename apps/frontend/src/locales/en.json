@@ -68,5 +68,22 @@
     "mentionMock": "Simulated content (Session A) — will be replaced by real generation in Session B.",
     "telecharger": "Download (.docx)",
     "nouvelleGeneration": "Start a new generation"
+  },
+  "abonnement": {
+    "lien": "My subscription",
+    "titre": "My subscription",
+    "statutEssai": "Free trial",
+    "statutActif": "Active subscription",
+    "statutExpire": "Expired subscription",
+    "statutAnnule": "Cancelled subscription",
+    "essaisRestants": "{n} trial generation(s) left out of 2",
+    "essaisEpuises": "Free trial exhausted — an active subscription is required to generate a new document.",
+    "generationsUtilisees": "{n} generation(s) used since the start of the period",
+    "planTitre": "Plan",
+    "planAucun": "No plan associated — you're using your free trial.",
+    "quotaScenarios": "Lesson plans",
+    "quotaParcours": "Training paths",
+    "quotaRessources": "Resources",
+    "quotaMention": "These tier quotas are not yet enforced generation by generation — only the free trial and subscription status currently gate access."
   }
 }

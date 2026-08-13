@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
+import { SubscriptionsModule } from "../subscriptions/subscriptions.module";
 import { UsersModule } from "../users/users.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
@@ -12,9 +13,11 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
  * de token précise explicitement son secret et sa durée de vie
  * (access vs refresh) dans `AuthService`, plutôt que de dépendre d'une
  * configuration globale unique qui ne distinguerait pas les deux.
+ * Dépend de `SubscriptionsModule` pour créer l'essai gratuit à
+ * l'inscription, sans jamais écrire directement dans `UserSubscription`.
  */
 @Module({
-  imports: [PassportModule, JwtModule.register({}), UsersModule],
+  imports: [PassportModule, JwtModule.register({}), UsersModule, SubscriptionsModule],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
   exports: [AuthService],

@@ -4,6 +4,7 @@ import { Job } from "bullmq";
 import { GenerationEtape, GenerationJobStatut } from "@sama-emi/contracts";
 import { PrismaService } from "../../prisma/prisma.service";
 import { DocumentsService } from "../documents/documents.service";
+import { SubscriptionsService } from "../subscriptions/subscriptions.service";
 import { AnthropicGenerationClient } from "./anthropic-generation.client";
 import { AnthropicGenerationError } from "./anthropic-generation.error";
 import { ContentComposerService } from "./content-composer.service";
@@ -18,10 +19,11 @@ import { DonneesJobGeneration, FILE_GENERATION } from "./generation.types";
  * La politique de nouvelle tentative (voir `OPTIONS_JOB_GENERATION`)
  * est gérée par BullMQ lui-même : ce processor n'a qu'à faire la
  * distinction entre une erreur transitoire (il la relance — `throw`
- * pour déclencher le backoff de BullMQ) et une erreur définitive
- * (il marque le job `ECHOUE` en base et absorbe l'erreur, pour ne pas
- * gaspiller les tentatives restantes sur une requête vouée à échouer
- * de la même façon).
+ * pour déclencher le backoff de BullMQ) et une erreur définitive (il
+ * marque le job `ECHOUE` en base, rembourse la quota consommée par ce
+ * job via `SubscriptionsService.rembourserQuota`, et absorbe l'erreur —
+ * pour ne pas gaspiller les tentatives restantes sur une requête vouée
+ * à échouer de la même façon).
  */
 @Processor(FILE_GENERATION)
 export class GenerationProcessor extends WorkerHost {
@@ -30,6 +32,7 @@ export class GenerationProcessor extends WorkerHost {
   constructor(
     private readonly prisma: PrismaService,
     private readonly documentsService: DocumentsService,
+    private readonly subscriptionsService: SubscriptionsService,
     private readonly gateway: GenerationGateway,
     private readonly anthropicClient: AnthropicGenerationClient,
     private readonly contentComposer: ContentComposerService,
@@ -81,7 +84,7 @@ export class GenerationProcessor extends WorkerHost {
   }
 
   private async gererErreur(job: Job<DonneesJobGeneration>, erreur: unknown): Promise<void> {
-    const { jobId, documentId } = job.data;
+    const { jobId, documentId, subscriptionId, typeConsommationQuota } = job.data;
     const estTransitoire = erreur instanceof AnthropicGenerationError ? erreur.retryable : true;
     const dernierEssai = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
     const message = erreur instanceof Error ? erreur.message : "Erreur inconnue lors de la génération.";
@@ -92,6 +95,7 @@ export class GenerationProcessor extends WorkerHost {
     }
 
     this.logger.error(`Échec définitif du job ${jobId} : ${message}`);
+    await this.subscriptionsService.rembourserQuota(subscriptionId, typeConsommationQuota);
     await this.prisma.generationJob.update({
       where: { id: jobId },
       data: { statut: GenerationJobStatut.ECHOUE, erreur: message },

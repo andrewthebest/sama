@@ -1,3 +1,4 @@
+import { TypeConsommationQuota } from "../subscriptions/subscriptions.types";
 import { CreateGenerationDto } from "./dto/create-generation.dto";
 
 /** Nom de la file BullMQ du moteur de génération. */
@@ -19,10 +20,20 @@ export const OPTIONS_JOB_GENERATION = {
   removeOnFail: { age: 86400 },
 };
 
-/** Données transportées par un job BullMQ de génération. */
+/**
+ * Données transportées par un job BullMQ de génération.
+ *
+ * `subscriptionId`/`typeConsommationQuota` reflètent la quota déjà
+ * débitée par `SubscriptionsService.consommerQuota` avant la mise en
+ * file — ils permettent à `GenerationProcessor` de la rembourser
+ * exactement (même abonnement, même origine) en cas d'échec définitif.
+ */
 export interface DonneesJobGeneration {
   jobId: string;
   documentId: string;
   titre: string;
   dto: CreateGenerationDto;
+  userId: string;
+  subscriptionId: string;
+  typeConsommationQuota: TypeConsommationQuota;
 }

@@ -4,32 +4,27 @@ import { JwtService, JwtSignOptions } from "@nestjs/jwt";
 import * as argon2 from "argon2";
 import { AuthResponseDto, AuthTokensDto } from "@sama-emi/contracts";
 import { PrismaService } from "../../prisma/prisma.service";
+import { SubscriptionsService } from "../subscriptions/subscriptions.service";
 import { UsersService } from "../users/users.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { JwtPayload } from "./jwt-payload.interface";
-
-/** Nombre d'essais gratuits accordés à l'inscription (cahier des charges, section 3.3). */
-const ESSAIS_GRATUITS_A_INSCRIPTION = 2;
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
+    private readonly subscriptionsService: SubscriptionsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
 
   /**
-   * Crée un compte utilisateur puis son abonnement d'essai par défaut.
-   *
-   * La création de l'essai gratuit est effectuée directement ici (plutôt
-   * que par un futur module `subscriptions`) car elle est un
-   * effet de bord obligatoire et non négociable de l'inscription. La
-   * logique de *décompte* et de *dépassement* de ce quota, elle,
-   * appartiendra au module `subscriptions` (Lot 2) — voir
-   * apps/backend/src/modules/generation/README.md.
+   * Crée un compte utilisateur puis son abonnement d'essai par défaut
+   * (`SubscriptionsService.creerEssaiGratuit`) — effet de bord
+   * obligatoire et non négociable de l'inscription (cahier des charges,
+   * section 3.3).
    */
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
     const existant = await this.usersService.findByEmail(dto.email);
@@ -49,14 +44,9 @@ export class AuthService {
         organisation: dto.organisation,
         languePreferee: dto.languePreferee ?? "fr",
         roleEmi: dto.roleEmi,
-        subscriptions: {
-          create: {
-            statut: "ESSAI",
-            essaisGratuitsRestants: ESSAIS_GRATUITS_A_INSCRIPTION,
-          },
-        },
       },
     });
+    await this.subscriptionsService.creerEssaiGratuit(user.id);
 
     const tokens = await this.emettreTokens(user.id, user.email, user.role);
     return { ...tokens, user: this.usersService.toPublicEntity(user) };

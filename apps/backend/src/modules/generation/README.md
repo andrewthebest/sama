@@ -58,10 +58,11 @@ tentatives restantes sur une requête vouée au même échec.
 ## Dépendances
 
 - `DocumentsModule` — création du document et de ses versions.
-- Accès direct et minimal à `UserSubscription` (Prisma) pour la
-  vérification de quota — voir « Logique métier non triviale »
-  ci-dessous. Cet accès sera retiré au profit de `SubscriptionsModule`
-  dès que celui-ci existera (Lot 2).
+- `SubscriptionsModule` — `SubscriptionsService.consommerQuota` avant la
+  mise en file (voir « Logique métier non triviale » ci-dessous) et
+  `SubscriptionsService.rembourserQuota` sur échec définitif. Ce module
+  n'accède plus directement à la table `UserSubscription` depuis la
+  Session C — voir `subscriptions/README.md`.
 - `ANTHROPIC_API_KEY` (variable d'environnement) — sans elle,
   `AnthropicGenerationClient` échoue immédiatement et de façon non
   transitoire dès le premier job (message d'erreur explicite dans
@@ -69,18 +70,21 @@ tentatives restantes sur une requête vouée au même échec.
 
 ## Logique métier non triviale
 
-**Vérification de quota.** `verifierEtReserverQuota` lit le dernier
-`UserSubscription` de l'utilisateur : si un essai gratuit reste
+**Vérification de quota.** `SubscriptionsService.consommerQuota` lit le
+dernier `UserSubscription` de l'utilisateur : si un essai gratuit reste
 disponible, il est décompté ; si l'abonnement est `ACTIF`, la
 génération est autorisée et comptabilisée ; sinon la requête est
 rejetée (`403`). C'est une version volontairement minimale de la
 politique de quota — la grille par palier, la distinction par type de
 génération et les achats à l'unité sont hors périmètre de cette
-session (voir cahier des charges, section 3.3, et le dossier
-d'architecture, section 7b). **Limite connue** : le quota est décompté
-avant l'appel Anthropic ; un échec définitif de génération ne
-rembourse pas l'unité consommée — à traiter avec la logique complète
-du futur module `subscriptions` (Lot 2).
+session (voir cahier des charges, section 3.3, et
+`subscriptions/README.md`). L'identifiant de l'abonnement débité et
+l'origine de la consommation (`subscriptionId`/`typeConsommationQuota`)
+voyagent avec le job BullMQ (`DonneesJobGeneration`) pour permettre un
+remboursement exact si la génération échoue définitivement —
+`GenerationProcessor.gererErreur` l'appelle avant de marquer le job
+`ECHOUE`, ce qui referme la limite connue documentée jusqu'à la Session
+B (le quota n'était alors jamais restitué).
 
 **Tool use forcé plutôt que prompt libre.** `tool_choice` force
 l'appel de l'unique outil déclaré (`rediger_scenario` ou
@@ -94,5 +98,6 @@ appel, pas un raisonnement agentique multi-étapes.
   `ContentComposerService.composerParcours` gèrent déjà
   `derouleParJour` ; ajuster `AnthropicGenerationClient.calculerMaxTokens`
   si des parcours plus longs que ~8 jours sont nécessaires.
-- Remboursement de quota sur échec définitif : à ajouter lors de
-  l'implémentation du module `subscriptions` (Lot 2).
+- Application réelle de la grille de quotas par palier
+  (`Plan.quotaScenarios`/`quotaParcours`/`quotaRessources`) : voir la
+  limite connue équivalente dans `subscriptions/README.md`.
