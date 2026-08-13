@@ -1,0 +1,222 @@
+// ---------------------------------------------------------------------------
+// SAMA EMI — schéma Prisma (Lot 0/Session A : entités du cœur produit)
+//
+// Ce fichier ne couvre que les entités nécessaires au cœur produit
+// (auth, users, documents, generation, feedback) plus les entités
+// d'abonnement (Plan, UserSubscription) posées sans intégration de
+// paiement, conformément au phasage validé lors du cadrage. Les entités
+// des modules suivants (Resource, ResourceReview, TrainingModule,
+// TrainingProgress, Notification) seront ajoutées à leurs sessions
+// respectives — les ajouter maintenant créerait des tables inutilisées.
+//
+// Les enums ci-dessous dupliquent volontairement les valeurs de
+// `packages/contracts/src/enums.ts` : Prisma ne permet pas d'importer un
+// enum TypeScript externe dans son schéma. Toute évolution doit être
+// répercutée aux deux endroits (voir packages/contracts/README.md).
+// ---------------------------------------------------------------------------
+
+// Le générateur classique "prisma-client-js" est utilisé plutôt que le
+// nouveau générateur par défaut "prisma-client" (introduit en Prisma 7) :
+// ce dernier émet un client ESM (`import.meta.url`), incompatible avec la
+// compilation CommonJS de NestJS. "prisma-client-js" reste en CommonJS.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Depuis Prisma 7, l'URL de connexion n'est plus déclarée ici mais dans
+// `prisma.config.ts` (CLI : generate/migrate) et injectée à l'exécution
+// via un driver adapter (voir src/prisma/prisma.service.ts).
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  UTILISATEUR
+  MODERATEUR
+  ADMINISTRATEUR
+}
+
+enum DocumentType {
+  SCENARIO
+  PARCOURS
+}
+
+enum ThematiqueType {
+  REFEMI
+  PERSONNALISEE
+}
+
+enum GenerationJobStatut {
+  EN_FILE
+  EN_COURS
+  TERMINE
+  ECHOUE
+}
+
+enum GenerationEtape {
+  CADRAGE_RECU
+  GENERATION_CONTENU
+  MISE_EN_FORME
+  FINALISATION
+}
+
+enum SubscriptionStatut {
+  ESSAI
+  ACTIF
+  EXPIRE
+  ANNULE
+}
+
+enum PlanPeriode {
+  MENSUEL
+  ANNUEL
+}
+
+/// Compte utilisateur — base de l'authentification.
+/// Le champ `pays` est obligatoire : il contextualise les documents
+/// générés (exemples, réalités locales, références légales) et sert de
+/// filtre de pertinence pour la banque de ressources communautaire.
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  nom            String
+  prenom         String
+  role           Role     @default(UTILISATEUR)
+  organisation   String?
+  pays           String
+  languePreferee String   @default("fr")
+  roleEmi        String?
+  emailVerifie   Boolean  @default(false)
+  refreshTokenHash String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  documents      Document[]
+  subscriptions  UserSubscription[]
+  feedbacks      Feedback[]
+
+  @@index([pays])
+}
+
+/// Offre d'abonnement. Les quotas sont éditables depuis l'administration
+/// (module `admin`) — jamais codés en dur dans le moteur de génération.
+model Plan {
+  id               String      @id @default(cuid())
+  nom              String
+  prixCentimes     Int
+  devise           String      @default("XOF")
+  periode          PlanPeriode @default(MENSUEL)
+  quotaScenarios   Int
+  quotaParcours    Int
+  quotaRessources  Int
+  essaiInclus      Boolean     @default(false)
+  actif            Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+
+  souscriptions    UserSubscription[]
+}
+
+/// Abonnement (ou essai gratuit) d'un utilisateur, avec suivi de
+/// consommation. Voir apps/backend/src/modules/subscriptions/README.md
+/// (Lot 2) pour la logique de décompte — les entités sont posées dès la
+/// Session A mais la logique de quota sera implémentée à ce lot.
+model UserSubscription {
+  id                    String             @id @default(cuid())
+  userId                String
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                String?
+  plan                  Plan?              @relation(fields: [planId], references: [id])
+  statut                SubscriptionStatut @default(ESSAI)
+  dateDebut             DateTime           @default(now())
+  dateFin               DateTime?
+  generationsUtilisees  Int                @default(0)
+  /// Nombre d'essais gratuits restants à l'inscription (2 par défaut,
+  /// valeur configurable — voir apps/backend/src/modules/subscriptions).
+  essaisGratuitsRestants Int               @default(2)
+  createdAt             DateTime           @default(now())
+
+  @@index([userId, statut])
+}
+
+/// Un scénario pédagogique ou un parcours de formation généré, rattaché
+/// par défaut à l'utilisateur qui l'a créé.
+model Document {
+  id                    String         @id @default(cuid())
+  type                  DocumentType
+  userId                String
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titre                 String
+  /// Pays figé au moment de la génération (indépendant d'un changement
+  /// ultérieur du pays du profil utilisateur).
+  pays                  String
+  thematiqueType        ThematiqueType
+  /// { culture, competence, niveau, thematique } si thematiqueType = REFEMI
+  referentielRefemi     Json?
+  thematiqueLibre       String?
+  objectifsLibres       String?
+  /// public, durée, modalité, profil du formateur, niveau, langue, jours…
+  parametresGeneration  Json
+  versionCourante       Int            @default(1)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  versions              DocumentVersion[]
+  generationJobs        GenerationJob[]
+  feedbacks             Feedback[]
+
+  @@index([userId])
+  @@index([pays])
+}
+
+/// Historique des versions d'un même document (régénérations/ajustements).
+model DocumentVersion {
+  id             String   @id @default(cuid())
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  numeroVersion  Int
+  /// Contenu structuré complet du document à cette version (sections,
+  /// tableaux…), au format produit par le moteur de génération.
+  contenu        Json
+  noteDeVersion  String?
+  createdAt      DateTime @default(now())
+
+  @@unique([documentId, numeroVersion])
+}
+
+/// Suivi temps réel d'une génération en cours, diffusé via le
+/// GenerationGateway (WebSocket). Voir apps/backend/src/modules/generation.
+model GenerationJob {
+  id          String              @id @default(cuid())
+  documentId  String
+  document    Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  statut      GenerationJobStatut @default(EN_FILE)
+  etape       GenerationEtape?
+  /// Pourcentage de progression indicatif (0-100), affiché côté client
+  /// pour éviter toute impression de blocage.
+  progression Int                 @default(0)
+  demarreLe   DateTime?
+  termineLe   DateTime?
+  erreur      String?
+  createdAt   DateTime            @default(now())
+
+  @@index([documentId])
+}
+
+/// Retour de session, lié à un document généré et traçable par utilisateur.
+model Feedback {
+  id                String   @id @default(cuid())
+  documentId        String
+  document          Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note              Int
+  commentaire       String?
+  dureeReellePrevue String?
+  /// Champs structurés additionnels (ce qui a bien fonctionné, ajustements…).
+  champsStructures  Json?
+  createdAt         DateTime @default(now())
+
+  @@index([documentId])
+  @@index([userId])
+}

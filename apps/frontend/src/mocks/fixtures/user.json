@@ -1,0 +1,13 @@
+{
+  "id": "demo-user-1",
+  "email": "demo@sama-emi.org",
+  "nom": "Ndiaye",
+  "prenom": "Fatou",
+  "role": "UTILISATEUR",
+  "organisation": "Association EMI Ouest Afrique",
+  "pays": "SN",
+  "languePreferee": "fr",
+  "roleEmi": "formateur",
+  "emailVerifie": true,
+  "createdAt": "2026-01-15T09:00:00.000Z"
+}

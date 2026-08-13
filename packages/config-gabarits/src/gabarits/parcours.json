@@ -1,0 +1,98 @@
+{
+  "id": "parcours",
+  "version": 1,
+  "libelle": "Parcours de formation",
+  "description": "Plusieurs jours/modules, plusieurs thématiques possibles. Reprend le gabarit scénario avec une architecture multi-modules — cahier des charges SAMA EMI, section 6.2.",
+  "couverture": {
+    "champs": [
+      "referentielRattachement",
+      "citationRefemiOuMentionPersonnalisee",
+      "public",
+      "effectif",
+      "dureeTotaleJours",
+      "modalite",
+      "profilFormateur",
+      "langue",
+      "prerequis"
+    ],
+    "regle": "Idem scénario + durée totale (jours) et effectif recommandé pour un format multi-jours."
+  },
+  "sections": [
+    {
+      "numero": 1,
+      "id": "objectifs",
+      "titre": "Objectifs pédagogiques du parcours",
+      "contenuGenereParIA": true,
+      "regle": "SMART, regroupés par module. Peut couvrir plusieurs objectifs si l'utilisateur en a saisi plusieurs."
+    },
+    {
+      "numero": 2,
+      "id": "public-contexte",
+      "titre": "Public et contexte",
+      "contenuGenereParIA": true
+    },
+    {
+      "numero": 3,
+      "id": "profil-formateur",
+      "titre": "Profil et compétences de transférabilité du formateur",
+      "contenuGenereParIA": true,
+      "blocFixeApres": "gestesProfessionnelsFormateur"
+    },
+    {
+      "numero": 4,
+      "id": "architecture-parcours",
+      "titre": "Architecture du parcours",
+      "contenuGenereParIA": true,
+      "tableau": {
+        "colonnes": ["module", "domaineCompetenceRefemi", "niveau", "duree", "jour"]
+      }
+    },
+    {
+      "numero": "5..N",
+      "id": "deroule-par-jour",
+      "titre": "Déroulé détaillé, un tableau par journée",
+      "contenuGenereParIA": true,
+      "repeteParJour": true,
+      "tableau": {
+        "colonnes": ["horaire", "etape", "contenuEtObjectif", "modeApprentissage", "modalite", "materiel"],
+        "colonneModeApprentissageObligatoire": true,
+        "sourceValeursModeApprentissage": "modes-apprentissage.json"
+      }
+    },
+    {
+      "numero": "N+1",
+      "id": "fiches-activites-par-module",
+      "titre": "Fiches détaillées des activités par module",
+      "contenuGenereParIA": true,
+      "regle": "Même niveau de détail que pour un scénario simple (banques, grilles, canevas) — pas un simple résumé.",
+      "mentionFixeApres": "mentionRessourcesIndicatives"
+    },
+    {
+      "numero": "N+2",
+      "id": "evaluation",
+      "titre": "Évaluation du parcours",
+      "contenuGenereParIA": true,
+      "sousSections": ["diagnostiqueJ1", "formativeContinue", "sommativeFinDeParcours", "aChaud", "recommandationEvaluationAFroid"]
+    },
+    {
+      "numero": "N+3",
+      "id": "arbitrages",
+      "titre": "Arbitrages pédagogiques",
+      "contenuGenereParIA": true
+    },
+    {
+      "numero": "N+4",
+      "id": "materiel",
+      "titre": "Matériel nécessaire",
+      "contenuGenereParIA": true,
+      "mentionFixeApres": "mentionMaterielFlexible"
+    },
+    {
+      "numero": "N+5",
+      "id": "variantes",
+      "titre": "Variantes et adaptations",
+      "contenuGenereParIA": true,
+      "regle": "Formats plus courts, autre public, parcours modulaire étalé."
+    }
+  ]
+}

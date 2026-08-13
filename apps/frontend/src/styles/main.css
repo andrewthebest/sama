@@ -1,0 +1,114 @@
+:root {
+  --couleur-marque: #0e7c7b;
+  --couleur-marque-fonce: #0a5b5a;
+  --couleur-marque-claire: #e4f0ef;
+  --couleur-fond: #f6f9f8;
+  --couleur-surface: #ffffff;
+  --couleur-texte: #16221f;
+  --couleur-texte-att: #58685f;
+  --couleur-bordure: #dde6e3;
+  --couleur-danger: #b23a3a;
+  --rayon: 10px;
+  --ombre: 0 1px 3px rgba(20, 40, 35, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--couleur-fond);
+  color: var(--couleur-texte);
+}
+
+h1, h2, h3 {
+  line-height: 1.2;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: var(--couleur-marque-fonce);
+}
+
+.bouton-primaire {
+  background: var(--couleur-marque);
+  color: #fff;
+  border: none;
+  border-radius: var(--rayon);
+  padding: 10px 18px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.bouton-primaire:hover:not(:disabled) {
+  background: var(--couleur-marque-fonce);
+}
+.bouton-primaire:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bouton-secondaire {
+  background: transparent;
+  color: var(--couleur-marque-fonce);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon);
+  padding: 10px 18px;
+  font-weight: 600;
+}
+
+.carte {
+  background: var(--couleur-surface);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon);
+  box-shadow: var(--ombre);
+  padding: 24px;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.champ label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--couleur-texte-att);
+}
+
+.champ input,
+.champ select,
+.champ textarea {
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--couleur-surface);
+  color: var(--couleur-texte);
+}
+
+.champ input:focus,
+.champ select:focus,
+.champ textarea:focus {
+  outline: 2px solid var(--couleur-marque);
+  outline-offset: 1px;
+}
+
+.message-erreur {
+  color: var(--couleur-danger);
+  font-size: 13.5px;
+}
+
+.conteneur {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}

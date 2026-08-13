@@ -1,0 +1,72 @@
+{
+  "marque": "SAMA EMI",
+  "slogan": "Système d'Accompagnement des Médiateurs et Animateurs en EMI",
+  "commun": {
+    "pays": "Pays",
+    "langue": "Langue",
+    "valider": "Valider",
+    "annuler": "Annuler",
+    "retour": "Retour",
+    "chargement": "Chargement…",
+    "suivant": "Continuer"
+  },
+  "auth": {
+    "connexionTitre": "Connexion",
+    "inscriptionTitre": "Créer un compte",
+    "email": "Email",
+    "motDePasse": "Mot de passe",
+    "nom": "Nom",
+    "prenom": "Prénom",
+    "organisation": "Organisation (optionnel)",
+    "basculerVersInscription": "Pas encore de compte ? Inscrivez-vous",
+    "basculerVersConnexion": "Déjà un compte ? Connectez-vous",
+    "connecter": "Se connecter",
+    "inscrire": "Créer mon compte",
+    "erreur": "Identifiants invalides ou compte déjà existant."
+  },
+  "accueil": {
+    "titre": "Que souhaitez-vous générer ?",
+    "sousTitre": "Un document assisté par IA, fondé sur le référentiel REFEMI.",
+    "scenario": "Scénario pédagogique",
+    "scenarioDescription": "Une séance, une thématique.",
+    "parcours": "Parcours de formation",
+    "parcoursDescription": "Plusieurs jours, plusieurs modules."
+  },
+  "cadrage": {
+    "titreScenario": "Cadrage du scénario pédagogique",
+    "titreParcours": "Cadrage du parcours de formation",
+    "sourceThematique": "Source de la thématique",
+    "refemi": "Référentiel REFEMI",
+    "personnalisee": "Thématique personnalisée",
+    "culture": "Culture",
+    "competence": "Compétence",
+    "thematique": "Thématique",
+    "thematiqueLibre": "Décrivez votre thématique",
+    "objectifsLibres": "Objectifs pédagogiques",
+    "public": "Public",
+    "duree": "Durée de la séance",
+    "formatGlobal": "Format global",
+    "nombreJours": "Nombre de jours",
+    "modalite": "Modalité",
+    "profilFormateur": "Profil du formateur",
+    "niveau": "Niveau souhaité",
+    "lancerGeneration": "Lancer la génération",
+    "quotaAvertissement": "La génération est soumise à votre quota d'essais ou d'abonnement."
+  },
+  "progression": {
+    "titre": "Génération en cours",
+    "CADRAGE_RECU": "Cadrage reçu",
+    "GENERATION_CONTENU": "Génération du contenu",
+    "MISE_EN_FORME": "Mise en forme du document",
+    "FINALISATION": "Finalisation",
+    "termine": "Votre document est prêt !",
+    "voirDocument": "Voir l'aperçu",
+    "erreur": "La génération a échoué. Veuillez réessayer."
+  },
+  "apercu": {
+    "titre": "Aperçu du document",
+    "mentionMock": "Contenu simulé (Session A) — sera remplacé par la génération réelle en Session B.",
+    "telecharger": "Télécharger (.docx)",
+    "nouvelleGeneration": "Lancer une nouvelle génération"
+  }
+}

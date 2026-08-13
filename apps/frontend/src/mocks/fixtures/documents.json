@@ -1,0 +1,31 @@
+[
+  {
+    "id": "demo-doc-1",
+    "type": "SCENARIO",
+    "userId": "demo-user-1",
+    "titre": "Scénario — Analyser le traitement d'une information",
+    "pays": "SN",
+    "thematiqueType": "REFEMI",
+    "referentielRefemi": {
+      "culture": "Culture informationnelle",
+      "competence": "Connaître l'information",
+      "niveau": "INTERMEDIAIRE",
+      "thematique": "Analyser le traitement d'une même information"
+    },
+    "thematiqueLibre": null,
+    "objectifsLibres": null,
+    "parametresGeneration": {
+      "public": "Jeunes / élèves (11-18 ans)",
+      "duree": "2h",
+      "modalite": "PRESENTIEL",
+      "profilFormateur": "Enseignant·e / Formateur·trice",
+      "niveau": "INTERMEDIAIRE",
+      "langue": "fr",
+      "nombreJours": null,
+      "formatGlobal": null
+    },
+    "versionCourante": 1,
+    "createdAt": "2026-08-01T10:00:00.000Z",
+    "updatedAt": "2026-08-01T10:04:00.000Z"
+  }
+]

@@ -1,0 +1,72 @@
+{
+  "marque": "SAMA EMI",
+  "slogan": "Support System for Media and Information Literacy Facilitators",
+  "commun": {
+    "pays": "Country",
+    "langue": "Language",
+    "valider": "Submit",
+    "annuler": "Cancel",
+    "retour": "Back",
+    "chargement": "Loading…",
+    "suivant": "Continue"
+  },
+  "auth": {
+    "connexionTitre": "Log in",
+    "inscriptionTitre": "Create an account",
+    "email": "Email",
+    "motDePasse": "Password",
+    "nom": "Last name",
+    "prenom": "First name",
+    "organisation": "Organization (optional)",
+    "basculerVersInscription": "No account yet? Sign up",
+    "basculerVersConnexion": "Already have an account? Log in",
+    "connecter": "Log in",
+    "inscrire": "Create my account",
+    "erreur": "Invalid credentials or account already exists."
+  },
+  "accueil": {
+    "titre": "What would you like to generate?",
+    "sousTitre": "An AI-assisted document, grounded in the REFEMI framework.",
+    "scenario": "Lesson plan",
+    "scenarioDescription": "One session, one topic.",
+    "parcours": "Training path",
+    "parcoursDescription": "Several days, several modules."
+  },
+  "cadrage": {
+    "titreScenario": "Lesson plan brief",
+    "titreParcours": "Training path brief",
+    "sourceThematique": "Topic source",
+    "refemi": "REFEMI framework",
+    "personnalisee": "Custom topic",
+    "culture": "Domain",
+    "competence": "Competency",
+    "thematique": "Topic",
+    "thematiqueLibre": "Describe your topic",
+    "objectifsLibres": "Learning objectives",
+    "public": "Audience",
+    "duree": "Session duration",
+    "formatGlobal": "Overall format",
+    "nombreJours": "Number of days",
+    "modalite": "Delivery mode",
+    "profilFormateur": "Facilitator profile",
+    "niveau": "Target level",
+    "lancerGeneration": "Launch generation",
+    "quotaAvertissement": "Generation is subject to your trial or subscription quota."
+  },
+  "progression": {
+    "titre": "Generation in progress",
+    "CADRAGE_RECU": "Brief received",
+    "GENERATION_CONTENU": "Generating content",
+    "MISE_EN_FORME": "Formatting document",
+    "FINALISATION": "Finalizing",
+    "termine": "Your document is ready!",
+    "voirDocument": "View preview",
+    "erreur": "Generation failed. Please try again."
+  },
+  "apercu": {
+    "titre": "Document preview",
+    "mentionMock": "Simulated content (Session A) — will be replaced by real generation in Session B.",
+    "telecharger": "Download (.docx)",
+    "nouvelleGeneration": "Start a new generation"
+  }
+}
